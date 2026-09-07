@@ -17,9 +17,16 @@ const OfficialPartner = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    image: {
-      type: DataTypes.STRING(500),
+    images: {
+      type: DataTypes.JSON,
       allowNull: false,
+      validate: {
+        isStringArray(value) {
+          if (!Array.isArray(value) || value.length === 0 || value.some((image) => typeof image !== "string" || image.trim() === "")) {
+            throw new Error("images must be a non-empty array of strings");
+          }
+        },
+      },
     },
     background: {
       type: DataTypes.STRING(500),

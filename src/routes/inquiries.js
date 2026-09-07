@@ -1,5 +1,4 @@
 const express = require("express");
-const rateLimit = require("express-rate-limit");
 const Inquiry = require("../models/Inquiry");
 const authMiddleware = require("../middleware/auth");
 const { sendSuccess, sendError } = require("../utils/envelope");
@@ -8,14 +7,6 @@ const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagin
 const publicRouter = express.Router();
 const adminRouter = express.Router();
 adminRouter.use(authMiddleware);
-
-const publicLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  limit: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, data: null, error: { code: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later", details: null, requestId: "rate_limit" } },
-});
 
 function serialize(i) {
   const j = i.toJSON();
@@ -33,7 +24,7 @@ function serialize(i) {
 }
 
 // POST /inquiries - public create
-publicRouter.post("/", publicLimiter, async (req, res) => {
+publicRouter.post("/", async (req, res) => {
   try {
     const { name, city, whatsapp, interest, email, message, source } = req.body;
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });

@@ -109,10 +109,10 @@ Model `Product` matches `backend.md:3.1` with `isHighlight` for `HighlightedProd
 const { data } = await apiFetch<OfficialPartner[]>("/official-partners?isPublished=true&q=&page=1&limit=10");
 
 // mapping for OfficialPartnersSection
-const mapped = data.map(p => ({ brandLogo: p.image, mainImage: p.background, color: p.color || stringToColor(p.id) }));
+const mapped = data.map(p => ({ brandLogo: p.images[0], brandImages: p.images, mainImage: p.background, color: p.color || stringToColor(p.id) }));
 
 // admin
-await apiFetch("/admin/official-partners", { method:"POST", body: JSON.stringify({id,name,description,image,background,isPublished}) });
+await apiFetch("/admin/official-partners", { method:"POST", body: JSON.stringify({id,name,description,images,background,isPublished}) });
 await apiFetch(`/admin/official-partners/${id}`, { method:"PUT", body: JSON.stringify({...}) });
 await apiFetch(`/admin/official-partners/${id}/publish`, { method:"PATCH", body: JSON.stringify({isPublished:false}) });
 await apiFetch(`/admin/official-partners/reorder`, { method:"PATCH", body: JSON.stringify({ids: orderedIds}) });

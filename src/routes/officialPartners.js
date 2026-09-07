@@ -15,7 +15,7 @@ function serialize(p) {
     id: j.id,
     name: j.name,
     description: j.description,
-    image: j.image,
+    images: j.images,
     background: j.background,
     isPublished: j.isPublished ?? j.is_published ?? true,
     link: j.link,
@@ -60,16 +60,18 @@ publicRouter.get("/:id", async (req, res) => {
 // ADMIN
 adminRouter.post("/", async (req, res) => {
   try {
-    const { id, name, description, image, background, isPublished, link, color, order } = req.body;
+    const { id, name, description, images, background, isPublished, link, color, order } = req.body;
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
-    if (!image) return sendError(res, { code: "VALIDATION_ERROR", message: "image is required", status: 422 });
+    if (!Array.isArray(images) || images.length === 0 || images.some((image) => typeof image !== "string" || image.trim() === "")) {
+      return sendError(res, { code: "VALIDATION_ERROR", message: "images must be a non-empty array of strings", status: 422 });
+    }
     if (!background) return sendError(res, { code: "VALIDATION_ERROR", message: "background is required", status: 422 });
     const partner = await OfficialPartner.create({
       id: String(id).toLowerCase(),
       name,
       description,
-      image,
+      images,
       background,
       isPublished: isPublished !== undefined ? !!isPublished : true,
       link,
@@ -88,7 +90,7 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const partner = await OfficialPartner.findByPk(req.params.id);
     if (!partner) return sendError(res, { code: "NOT_FOUND", message: "Official partner not found", status: 404 });
-    const { id, name, description, image, background, isPublished, link, color, order } = req.body;
+    const { id, name, description, images, background, isPublished, link, color, order } = req.body;
     if (id && id !== partner.id) {
       const exists = await OfficialPartner.findByPk(id);
       if (exists) return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
@@ -96,7 +98,12 @@ adminRouter.put("/:id", async (req, res) => {
     }
     if (name !== undefined) partner.name = name;
     if (description !== undefined) partner.description = description;
-    if (image !== undefined) partner.image = image;
+    if (images !== undefined) {
+      if (!Array.isArray(images) || images.length === 0 || images.some((image) => typeof image !== "string" || image.trim() === "")) {
+        return sendError(res, { code: "VALIDATION_ERROR", message: "images must be a non-empty array of strings", status: 422 });
+      }
+      partner.images = images;
+    }
     if (background !== undefined) partner.background = background;
     if (isPublished !== undefined) partner.isPublished = !!isPublished;
     if (link !== undefined) partner.link = link;

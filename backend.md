@@ -356,7 +356,7 @@ type OfficialPartner = {
   id: string;        // unique, e.g. "bensdorp" (frontend validates uniqueness)
   name: string;      // required, e.g. "Bens Dorp"
   description: string; // short, 0-500
-  image: string;     // URL: card image / brandLogo
+  images: string[];   // URLs: card images / brandLogo gallery
   background: string;// URL: card background / hero
   isPublished: boolean; // default true – controls Home display
   link?: string;     // optional CTA link (default "/products")
@@ -370,13 +370,13 @@ type OfficialPartner = {
 ### 9.2 Endpoints
 - `GET /official-partners?isPublished=true&q=&page&limit` – public Home uses `?isPublished=true`
 - `GET /official-partners/:id`
-- `POST /admin/official-partners` Body `{id,name,description,image,background,isPublished}` → `201` Err `409 id exists`
+- `POST /admin/official-partners` Body `{id,name,description,images,background,isPublished}` → `201` Err `409 id exists`
 - `PUT /admin/official-partners/:id` (id change validates uniqueness)
 - `PATCH /admin/official-partners/:id/publish` `{isPublished:boolean}` – for table toggle
 - `DELETE /admin/official-partners/:id` → `204`
 - `PATCH /admin/official-partners/reorder` Body `{ids: string[]}` – optional if drag reorder added.
 
-Frontend mapping: `OfficialPartnersSection` maps `image→brandLogo`, `background→mainImage`, `color=stringToColor(id)`.
+Frontend mapping: `OfficialPartnersSection` maps `images[0]→brandLogo`, `images→brandImages`, `background→mainImage`, `color=stringToColor(id)`.
 
 ---
 
@@ -563,8 +563,8 @@ model Product {
 model OfficialPartner {
   id          String   @id // allow custom id like "bensdorp"
   name        String
-  description String?  @db.Text
-  image       String
+  description String? @db.Text
+  images      String[]
   background  String
   isPublished Boolean  @default(true)
   order       Int      @default(0)

@@ -1,0 +1,244 @@
+require("dotenv").config();
+
+const { DataTypes } = require("sequelize");
+const {
+  sequelize,
+  User,
+  Product,
+  OfficialPartner,
+  Article,
+  Education,
+  Innovation,
+  Job,
+} = require("./src/models");
+
+const productFixtures = [
+  {
+    slug: "belgian-dark-72",
+    cat: "choco",
+    type: "home-brand",
+    title: "Belgian Dark Chocolate 72%",
+    note: "Rich cocoa with a balanced finish",
+    tag: "Dark Chocolate",
+    img: "/uploads/products/1788492683010-w7b2cs.png",
+    desc: "A rich dark chocolate made for baking, drinks, and everyday enjoyment.",
+    isHighlight: true,
+    isPublished: true,
+  },
+  {
+    slug: "matcha-premium",
+    cat: "matcha",
+    type: "general",
+    title: "Premium Matcha",
+    note: "Bright, smooth, and aromatic",
+    tag: "Matcha",
+    img: "/uploads/products/1788492930811-qbto3a.png",
+    desc: "Premium matcha with a smooth profile for beverages and culinary recipes.",
+    isHighlight: true,
+    isPublished: true,
+  },
+];
+
+const articleFixtures = [
+  {
+    slug: "tempering-guide",
+    thumbnail: "/uploads/products/1788492947952-k1vxde.png",
+    titleID: "Panduan Tempering Cokelat",
+    titleEN: "A Practical Guide to Tempering Chocolate",
+    titleZN: "巧克力调温实用指南",
+    category: "Chocolate",
+    excerpt: "Learn the basic steps for creating glossy chocolate with a satisfying snap.",
+    keywords: "chocolate, tempering, baking",
+    status: "published",
+    published_date: "2026-01-15",
+    contentID: "Tempering membantu menghasilkan cokelat yang mengilap dan memiliki tekstur yang renyah.",
+    contentEN: "Tempering helps create chocolate with a glossy finish and a satisfying snap.",
+    contentZN: "调温可以让巧克力拥有光泽和令人满意的脆感。",
+  },
+];
+
+const educationFixtures = [
+  {
+    id: "barista-matcha",
+    title: "Matcha Beverage Fundamentals",
+    desc: "Learn the fundamentals of preparing consistent matcha beverages.",
+    duration: "1 day",
+    level: "Beginner",
+    img: "/uploads/products/1788492930811-qbto3a.png",
+    eyebrow: "NaturaFoods Academy",
+    cta: "Explore course",
+    link: "/education/barista-matcha",
+    isPublished: true,
+  },
+];
+
+const innovationFixtures = [
+  {
+    id: "cocoa-process",
+    title: "Better Cocoa, Better Process",
+    desc: "Explore process improvements that protect cocoa quality from source to finished product.",
+    tag: "Cocoa",
+    img: "/uploads/products/1788492683010-w7b2cs.png",
+    eyebrow: "Innovation",
+    link: "/innovations/cocoa-process",
+    cta: "Learn more",
+    isPublished: true,
+  },
+];
+
+const partnerFixtures = [
+  {
+    id: "bensdorp",
+    name: "Bensdorp",
+    description: "A trusted partner for premium cocoa ingredients.",
+    images: [
+      "/uploads/partners/1788492930873-rhjo2e.png",
+      "/uploads/products/1788492683010-w7b2cs.png",
+    ],
+    background: "/uploads/partners/1788492930873-rhjo2e.png",
+    isPublished: true,
+    link: "https://www.bensdorp.com",
+    color: "#5C3825",
+    order: 1,
+  },
+];
+
+const jobFixtures = [
+  {
+    id: "sales-jkt",
+    title: "Sales Development Associate",
+    dept: "Commercial",
+    loc: "Jakarta",
+    type: "Full-time",
+    desc: "Development fixture for testing the careers listing and admin workflow.",
+    isPublished: false,
+  },
+];
+
+async function upsertBy(model, where, values, transaction, options = {}) {
+  const [record, created] = await model.findOrCreate({
+    where,
+    defaults: values,
+    transaction,
+  });
+
+  if (!created && options.updateExisting !== false) {
+    await record.update(values, { transaction });
+  }
+
+  return created;
+}
+
+async function migratePartnerImages() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("official_partners"))) return;
+
+  const table = await queryInterface.describeTable("official_partners");
+  if (!table.images && table.image) {
+    await sequelize.getQueryInterface().addColumn("official_partners", "images", {
+      type: DataTypes.JSON,
+      allowNull: true,
+    });
+    await sequelize.query(
+      "UPDATE official_partners SET images = JSON_ARRAY(image) WHERE image IS NOT NULL AND image <> ''"
+    );
+  }
+}
+
+async function seed() {
+  const syncOptions = process.env.DB_SYNC_ALTER === "false" ? {} : { alter: true };
+  await sequelize.authenticate();
+  await migratePartnerImages();
+  await sequelize.sync(syncOptions);
+
+  if (process.env.DB_SYNC_ALTER !== "false") {
+    await sequelize.getQueryInterface().removeColumn("official_partners", "image").catch(() => {});
+  }
+
+  const summary = {
+    users: { created: 0, updated: 0 },
+    products: { created: 0, updated: 0 },
+    partners: { created: 0, updated: 0 },
+    articles: { created: 0, updated: 0 },
+    education: { created: 0, updated: 0 },
+    innovations: { created: 0, updated: 0 },
+    jobs: { created: 0, updated: 0 },
+  };
+
+  await sequelize.transaction(async (transaction) => {
+    const seedPassword = process.env.SEED_ADMIN_PASSWORD;
+    const admin = await User.findOne({
+      where: { username: "admin" },
+      transaction,
+    });
+
+    if (!admin) {
+      await User.create(
+        {
+          name: "NaturaFoods Admin",
+          email: "admin@example.com",
+          username: "admin",
+          role: "admin",
+          password: seedPassword || "admin123",
+        },
+        { transaction }
+      );
+      summary.users.created += 1;
+    } else {
+      const values = {
+        name: "NaturaFoods Admin",
+        email: "admin@example.com",
+        role: "admin",
+      };
+      if (seedPassword) values.password = seedPassword;
+      await admin.update(values, { transaction });
+      summary.users.updated += 1;
+    }
+
+    for (const fixture of productFixtures) {
+      const created = await upsertBy(Product, { slug: fixture.slug }, fixture, transaction);
+      summary.products[created ? "created" : "updated"] += 1;
+    }
+
+    for (const fixture of partnerFixtures) {
+      const created = await upsertBy(OfficialPartner, { id: fixture.id }, fixture, transaction);
+      summary.partners[created ? "created" : "updated"] += 1;
+    }
+
+    for (const fixture of articleFixtures) {
+      const created = await upsertBy(Article, { slug: fixture.slug }, fixture, transaction);
+      summary.articles[created ? "created" : "updated"] += 1;
+    }
+
+    for (const fixture of educationFixtures) {
+      const created = await upsertBy(Education, { id: fixture.id }, fixture, transaction);
+      summary.education[created ? "created" : "updated"] += 1;
+    }
+
+    for (const fixture of innovationFixtures) {
+      const created = await upsertBy(Innovation, { id: fixture.id }, fixture, transaction);
+      summary.innovations[created ? "created" : "updated"] += 1;
+    }
+
+    for (const fixture of jobFixtures) {
+      const created = await upsertBy(Job, { id: fixture.id }, fixture, transaction);
+      summary.jobs[created ? "created" : "updated"] += 1;
+    }
+  });
+
+  console.log("Database seed completed.");
+  for (const [model, counts] of Object.entries(summary)) {
+    console.log(`- ${model}: ${counts.created} created, ${counts.updated} updated`);
+  }
+}
+
+seed()
+  .catch((error) => {
+    console.error("Database seed failed:", error.message);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await sequelize.close();
+  });
+
+module.exports = seed;

@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const path = require("path");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger");
 const sequelize = require("./src/config/database");
 const usersRouter = require("./src/routes/users");
 const rolesRouter = require("./src/routes/roles");
@@ -56,28 +58,15 @@ app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Global API rate limit: 100 requests per 15 minutes per IP
+// Global API rate limit: 30 requests per minute per IP
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 100,
+  windowMs: 60 * 1000,
+  limit: 30,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { success: false, data: null, error: { code: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later", details: null, requestId: "rate_limit" } },
 });
 app.use("/api", apiLimiter);
-
-// Stricter limit for user creation (bcrypt hashing is expensive)
-const createUserLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  limit: 10,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-  message: { success: false, data: null, error: { code: "TOO_MANY_REQUESTS", message: "Too many account creations, please try again later", details: null, requestId: "rate_limit" } },
-});
-app.use("/api/users", (req, res, next) => {
-  if (req.method === "POST") return createUserLimiter(req, res, next);
-  next();
-});
 
 // Legacy routes (pre-contract) keep for backward compat
 app.use("/api/users", usersRouter);
@@ -140,7 +129,17 @@ app.get("/", (req, res) => {
 // Health + openapi hint
 app.get("/api/v1", (req, res) => {
   const { sendSuccess } = require("./src/utils/envelope");
-  return sendSuccess(res, { version: "1.0.0", baseUrl: "/api/v1", docs: "see backend.md" });
+  return sendSuccess(res, { version: "1.0.0", baseUrl: "/api/v1", docs: "/api/docs" });
+});
+
+// Swagger API docs
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: ".swagger-ui .topbar { display: none }",
+  customSiteTitle: "NaturaFoods API Docs",
+}));
+app.get("/api/docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
 });
 
 // 404 for unknown api routes with envelope for v1
