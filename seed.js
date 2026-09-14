@@ -167,10 +167,62 @@ async function migratePartnerImages() {
   }
 }
 
+async function migrateProductCategories() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("products"))) return;
+
+  const table = await queryInterface.describeTable("products");
+
+  // Add category_id column if missing
+  if (!table.category_id) {
+    await queryInterface.addColumn("products", "category_id", {
+      type: DataTypes.UUID,
+      allowNull: true,
+    });
+  }
+
+  // Seed categories if table is empty or doesn't exist
+  if (!(await queryInterface.tableExists("categories"))) {
+    await sequelize.sync({ alter: true });
+  }
+  const catCount = await Category.count();
+  if (catCount === 0) {
+    for (const fixture of categoryFixtures) {
+      await Category.findOrCreate({ where: { slug: fixture.slug }, defaults: fixture });
+    }
+  }
+
+  // Migrate old cat values to category_id
+  if (table.cat) {
+    const categories = await Category.findAll();
+    const catMap = {};
+    categories.forEach((c) => (catMap[c.slug] = c.id));
+
+    for (const [slug, catId] of Object.entries(catMap)) {
+      await sequelize.query(
+        "UPDATE products SET category_id = ? WHERE cat = ? AND category_id IS NULL",
+        { replacements: [catId, slug] }
+      );
+    }
+
+    // Set any remaining nulls to 'other'
+    if (catMap.other) {
+      await sequelize.query(
+        "UPDATE products SET category_id = ? WHERE category_id IS NULL",
+        { replacements: [catMap.other] }
+      );
+    }
+
+    // Drop old cat column
+    await queryInterface.removeColumn("products", "cat").catch(() => {});
+  }
+}
+
 async function seed() {
   const syncOptions = process.env.DB_SYNC_ALTER === "false" ? {} : { alter: true };
   await sequelize.authenticate();
   await migratePartnerImages();
+  await migrateProductCategories();
   await sequelize.sync(syncOptions);
 
   if (process.env.DB_SYNC_ALTER !== "false") {
