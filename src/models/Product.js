@@ -18,9 +18,14 @@ const Product = sequelize.define(
         len: [3, 64],
       },
     },
-    cat: {
-      type: DataTypes.ENUM("choco", "matcha"),
+    categoryId: {
+      type: DataTypes.UUID,
       allowNull: false,
+      field: "category_id",
+      references: {
+        model: "categories",
+        key: "id",
+      },
     },
     type: {
       type: DataTypes.ENUM("home-brand", "small-pack", "general"),
@@ -45,7 +50,7 @@ const Product = sequelize.define(
       allowNull: false,
     },
     desc: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("medium"),
       allowNull: true,
     },
     isHighlight: {
@@ -64,7 +69,7 @@ const Product = sequelize.define(
   {
     tableName: "products",
     underscored: true,
-    indexes: [{ fields: ["is_highlight"] }, { fields: ["type"] }, { fields: ["cat"] }],
+    indexes: [{ fields: ["is_highlight"] }, { fields: ["type"] }, { fields: ["category_id"] }],
   }
 );
 

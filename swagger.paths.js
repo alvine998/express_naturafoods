@@ -15,6 +15,10 @@
  *     description: Innovation showcases
  *   - name: Jobs
  *     description: Job listings
+ *   - name: Sales
+ *     description: Sales team directory
+ *   - name: Home Brands
+ *     description: Home brand directory
  *   - name: Inquiries
  *     description: Public inquiry form & admin management
  *   - name: Official Partners
@@ -1198,6 +1202,300 @@
  *         description: Not found
  */
 
+// ─── HOME BRANDS ──────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /home-brands:
+ *   get:
+ *     tags: [Home Brands]
+ *     summary: List home brands (public)
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10, maximum: 50 }
+ *       - in: query
+ *         name: sort
+ *         schema: { type: string }
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: Search across name, desc
+ *     responses:
+ *       200:
+ *         description: Paginated home brands list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/HomeBrand'
+ *                     meta:
+ *                       $ref: '#/components/schemas/PaginationMeta'
+ */
+
+/**
+ * @swagger
+ * /home-brands/{id}:
+ *   get:
+ *     tags: [Home Brands]
+ *     summary: Get home brand by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Home brand details
+ *       404:
+ *         description: Not found
+ */
+
+/**
+ * @swagger
+ * /admin/home-brands:
+ *   post:
+ *     tags: [Home Brands]
+ *     summary: Create home brand (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateHomeBrandRequest'
+ *     responses:
+ *       201:
+ *         description: Home brand created
+ *       409:
+ *         description: ID already exists
+ *       422:
+ *         description: Missing id or name
+ */
+
+/**
+ * @swagger
+ * /admin/home-brands/{id}:
+ *   put:
+ *     tags: [Home Brands]
+ *     summary: Update home brand (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateHomeBrandRequest'
+ *     responses:
+ *       200:
+ *         description: Home brand updated
+ *       404:
+ *         description: Not found
+ *
+ *   delete:
+ *     tags: [Home Brands]
+ *     summary: Delete home brand (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       204:
+ *         description: Deleted
+ *       404:
+ *         description: Not found
+ */
+
+// ─── SALES ─────────────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /sales:
+ *   get:
+ *     tags: [Sales]
+ *     summary: List sales team (public)
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10, maximum: 50 }
+ *       - in: query
+ *         name: sort
+ *         schema: { type: string }
+ *       - in: query
+ *         name: gender
+ *         schema: { type: string }
+ *       - in: query
+ *         name: location
+ *         schema: { type: string }
+ *       - in: query
+ *         name: position
+ *         schema: { type: string }
+ *       - in: query
+ *         name: isPublished
+ *         schema: { type: boolean }
+ *       - in: query
+ *         name: published
+ *         schema: { type: boolean }
+ *         description: Alias of isPublished
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: Search across name, position, location, email, whatsapp
+ *     responses:
+ *       200:
+ *         description: Paginated sales list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Sale'
+ *                     meta:
+ *                       $ref: '#/components/schemas/PaginationMeta'
+ */
+
+/**
+ * @swagger
+ * /sales/{id}:
+ *   get:
+ *     tags: [Sales]
+ *     summary: Get sale by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Sale details
+ *       404:
+ *         description: Not found
+ */
+
+/**
+ * @swagger
+ * /admin/sales:
+ *   post:
+ *     tags: [Sales]
+ *     summary: Create sale entry (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateSaleRequest'
+ *     responses:
+ *       201:
+ *         description: Sale created
+ *       409:
+ *         description: ID already exists
+ *       422:
+ *         description: Missing id or name
+ */
+
+/**
+ * @swagger
+ * /admin/sales/{id}:
+ *   put:
+ *     tags: [Sales]
+ *     summary: Update sale entry (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateSaleRequest'
+ *     responses:
+ *       200:
+ *         description: Sale updated
+ *       404:
+ *         description: Not found
+ *
+ *   delete:
+ *     tags: [Sales]
+ *     summary: Delete sale entry (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       204:
+ *         description: Deleted
+ *       404:
+ *         description: Not found
+ */
+
+/**
+ * @swagger
+ * /admin/sales/{id}/publish:
+ *   patch:
+ *     tags: [Sales]
+ *     summary: Toggle sale publish status (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isPublished:
+ *                 type: boolean
+ *               published:
+ *                 type: boolean
+ *                 description: Alias of isPublished
+ *     responses:
+ *       200:
+ *         description: Publish status updated
+ *       404:
+ *         description: Not found
+ */
+
 // ─── INQUIRIES ─────────────────────────────────────────────────────
 
 /**
@@ -1517,7 +1815,7 @@
  *   get:
  *     tags: [Site Content]
  *     summary: Get all site content overrides (public)
- *     description: Returns all locale overrides as a keyed object { id: {...}, en: {...}, zh: {...} }.
+ *     description: "Returns all locale overrides as a keyed object { id: {...}, en: {...}, zh: {...} }."
  *     responses:
  *       200:
  *         description: All locale content
@@ -1764,7 +2062,7 @@
  *     tags: [Uploads]
  *     summary: Upload file (admin, multipart)
  *     description: |
- *       Uploads a file via multipart form data. Images (max 5MB) are auto-converted to WebP (1600px max).
+  *       Uploads a file via multipart form data. Images (max 10MB) are auto-converted to WebP (1600px max).
  *       Videos up to 20MB are allowed as-is. Files are stored to Cloudflare R2 or local disk.
  *     security:
  *       - bearerAuth: []

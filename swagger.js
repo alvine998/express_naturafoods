@@ -239,7 +239,7 @@ const options = {
           properties: {
             id: { type: "string", format: "uuid" },
             slug: { type: "string", example: "dark-choco-powder" },
-            cat: { type: "string", enum: ["choco", "matcha"] },
+            cat: { type: "string", enum: ["choco", "matcha", "other"] },
             type: {
               type: "string",
               enum: ["home-brand", "small-pack", "general"],
@@ -265,7 +265,7 @@ const options = {
               minLength: 3,
               maxLength: 64,
             },
-            cat: { type: "string", enum: ["choco", "matcha"] },
+            cat: { type: "string", enum: ["choco", "matcha", "other"] },
             title: { type: "string", minLength: 2, maxLength: 120 },
             img: { type: "string" },
             type: {
@@ -439,6 +439,64 @@ const options = {
           },
         },
 
+        // ─── HomeBrand ─────────────────────────────────────────────
+        HomeBrand: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            name: { type: "string" },
+            image: { type: "string", nullable: true },
+            desc: { type: "string", nullable: true },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+          },
+        },
+        CreateHomeBrandRequest: {
+          type: "object",
+          required: ["id", "name"],
+          properties: {
+            id: { type: "string", maxLength: 64 },
+            name: { type: "string", maxLength: 150 },
+            image: { type: "string" },
+            desc: { type: "string" },
+          },
+        },
+
+        // ─── Sale ───────────────────────────────────────────────────
+        Sale: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            name: { type: "string" },
+            gender: { type: "string", nullable: true },
+            position: { type: "string", nullable: true },
+            whatsapp: { type: "string", nullable: true },
+            email: { type: "string", format: "email", nullable: true },
+            photo: { type: "string", nullable: true },
+            location: { type: "string", nullable: true },
+            isPublished: { type: "boolean" },
+            published: { type: "boolean", description: "Alias of isPublished" },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+          },
+        },
+        CreateSaleRequest: {
+          type: "object",
+          required: ["id", "name"],
+          properties: {
+            id: { type: "string", maxLength: 64 },
+            name: { type: "string", maxLength: 150 },
+            gender: { type: "string", maxLength: 20 },
+            position: { type: "string", maxLength: 100 },
+            whatsapp: { type: "string", maxLength: 30 },
+            email: { type: "string", format: "email" },
+            photo: { type: "string" },
+            location: { type: "string", maxLength: 100 },
+            isPublished: { type: "boolean", default: true },
+            published: { type: "boolean", description: "Alias of isPublished" },
+          },
+        },
+
         // ─── Official Partner ───────────────────────────────────────
         OfficialPartner: {
           type: "object",
@@ -596,6 +654,8 @@ const options = {
             education: { type: "integer" },
             innovation: { type: "integer" },
             jobs: { type: "integer" },
+            sales: { type: "integer" },
+            homeBrands: { type: "integer" },
             inquiries: { type: "integer" },
             users: { type: "integer" },
             assistantEntries: { type: "integer" },

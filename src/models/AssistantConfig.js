@@ -27,7 +27,7 @@ const AssistantConfig = sequelize.define(
       field: "wa_link",
     },
     persona: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("medium"),
       allowNull: false,
     },
     tuning: {

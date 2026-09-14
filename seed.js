@@ -1,10 +1,11 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 const { DataTypes } = require("sequelize");
 const {
   sequelize,
   User,
   Product,
+  Category,
   OfficialPartner,
   Article,
   Education,
@@ -12,10 +13,31 @@ const {
   Job,
 } = require("./src/models");
 
+const categoryFixtures = [
+  {
+    slug: "choco",
+    name: "Chocolate",
+    description: "All chocolate products",
+    isActive: true,
+  },
+  {
+    slug: "matcha",
+    name: "Matcha",
+    description: "All matcha products",
+    isActive: true,
+  },
+  {
+    slug: "other",
+    name: "Other",
+    description: "Other products",
+    isActive: true,
+  },
+];
+
 const productFixtures = [
   {
     slug: "belgian-dark-72",
-    cat: "choco",
+    categorySlug: "choco",
     type: "home-brand",
     title: "Belgian Dark Chocolate 72%",
     note: "Rich cocoa with a balanced finish",
@@ -27,7 +49,7 @@ const productFixtures = [
   },
   {
     slug: "matcha-premium",
-    cat: "matcha",
+    categorySlug: "matcha",
     type: "general",
     title: "Premium Matcha",
     note: "Bright, smooth, and aromatic",
@@ -157,6 +179,7 @@ async function seed() {
 
   const summary = {
     users: { created: 0, updated: 0 },
+    categories: { created: 0, updated: 0 },
     products: { created: 0, updated: 0 },
     partners: { created: 0, updated: 0 },
     articles: { created: 0, updated: 0 },
@@ -195,8 +218,20 @@ async function seed() {
       summary.users.updated += 1;
     }
 
+    // Seed categories
+    const categoryMap = {};
+    for (const fixture of categoryFixtures) {
+      const created = await upsertBy(Category, { slug: fixture.slug }, fixture, transaction);
+      summary.categories[created ? "created" : "updated"] += 1;
+      const cat = await Category.findOne({ where: { slug: fixture.slug }, transaction });
+      categoryMap[fixture.slug] = cat.id;
+    }
+
+    // Seed products with categoryId
     for (const fixture of productFixtures) {
-      const created = await upsertBy(Product, { slug: fixture.slug }, fixture, transaction);
+      const { categorySlug, ...productData } = fixture;
+      productData.categoryId = categoryMap[categorySlug];
+      const created = await upsertBy(Product, { slug: fixture.slug }, productData, transaction);
       summary.products[created ? "created" : "updated"] += 1;
     }
 

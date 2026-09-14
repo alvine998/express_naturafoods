@@ -59,7 +59,7 @@ Default `limit=10`, max `limit=50`. Default `sort=createdAt:desc`. Frontend `PAG
 Upload returns `url` (CDN/https). Frontend currently uses `data:image/*;base64` for preview; backend must accept `multipart/form-data` and return `https://cdn.../xxx.webp`. Allow external `https://images.unsplash.com/...` as passthrough.
 
 ### 1.6 Error Codes
-`UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `CONFLICT` (409, e.g. duplicate slug/id), `VALIDATION_ERROR` (422), `PAYLOAD_TOO_LARGE` (413, upload >5MB), `INTERNAL_ERROR` (500).
+`UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `CONFLICT` (409, e.g. duplicate slug/id), `VALIDATION_ERROR` (422), `PAYLOAD_TOO_LARGE` (413, upload >10MB image / >20MB video), `INTERNAL_ERROR` (500).
 
 ### 1.7 CORS
 Allow `https://naturafoods.co.id`, `https://www.naturafoods.co.id`, `http://localhost:3000`.
@@ -444,7 +444,7 @@ Optional chat proxy:
 Frontend `FileUpload` (`app/admin/_components.tsx:67`) currently `FileReader.readAsDataURL`. Backend replaces withcdn URL.
 
 - `POST /admin/uploads` (Auth) `Content-Type: multipart/form-data` Field `file: binary`, optional `folder: "products"|"partners"|"articles"|...`
-  - Max 5MB image, 20MB video (`accept: image/*,video/*` where needed).
+  - Max 10MB image, 20MB video (`accept: image/*,video/*` where needed).
   - Resp `201: { data: { url: "https://cdn.naturafoods.co.id/uploads/products/xxx.webp", originalName, size, mime } }`
   - Process: image → webp 1600px max, video → mp4/hls.
   - Allow `DELETE /admin/uploads` with `url` for orphan cleanup.

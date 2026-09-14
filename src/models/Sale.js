@@ -1,55 +1,54 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
-const Education = sequelize.define(
-  "Education",
+const Sale = sequelize.define(
+  "Sale",
   {
     id: {
       type: DataTypes.STRING(64),
       primaryKey: true,
     },
-    title: {
-      type: DataTypes.STRING(200),
+    name: {
+      type: DataTypes.STRING(150),
       allowNull: false,
     },
-    desc: {
-      type: DataTypes.TEXT("medium"),
+    gender: {
+      type: DataTypes.STRING(20),
       allowNull: true,
     },
-    duration: {
+    position: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-    level: {
+    whatsapp: {
+      type: DataTypes.STRING(30),
+      allowNull: true,
+    },
+    email: {
+      type: DataTypes.STRING(150),
+      allowNull: true,
+      validate: { isEmail: true },
+    },
+    photo: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    location: {
       type: DataTypes.STRING(100),
-      allowNull: true,
-    },
-    img: {
-      type: DataTypes.STRING(500),
-      allowNull: true,
-    },
-    eyebrow: {
-      type: DataTypes.STRING(200),
-      allowNull: true,
-    },
-    cta: {
-      type: DataTypes.STRING(200),
-      allowNull: true,
-    },
-    link: {
-      type: DataTypes.STRING(500),
       allowNull: true,
     },
     isPublished: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
       defaultValue: true,
       field: "is_published",
     },
   },
   {
-    tableName: "educations",
+    tableName: "sales",
     underscored: true,
+    indexes: [{ fields: ["is_published"] }, { fields: ["location"] }],
   }
 );
 
-module.exports = Education;
+module.exports = Sale;

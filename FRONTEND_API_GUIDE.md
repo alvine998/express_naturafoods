@@ -242,7 +242,7 @@ await apiFetch("/admin/uploads", { method:"DELETE", body: JSON.stringify({url}) 
 // or {key: "products/xxx.webp"}
 ```
 
-Limits: image 5MB (`PAYLOAD_TOO_LARGE`), video 20MB. `DELETE /admin/uploads` accepts either `url` or `key`. Add `remotePatterns` in `next.config.ts:8` for `cdn.naturafoods.co.id` and `localhost`:
+Limits: image 10MB (`PAYLOAD_TOO_LARGE`), video 20MB. `DELETE /admin/uploads` accepts either `url` or `key`. Add `remotePatterns` in `next.config.ts:8` for `cdn.naturafoods.co.id` and `localhost`:
 ```ts
 images: { remotePatterns: [{ protocol:"https", hostname:"cdn.naturafoods.co.id" }, {protocol:"https", hostname:"images.unsplash.com"}] }
 ```

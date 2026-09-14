@@ -34,7 +34,7 @@ const Article = sequelize.define(
       allowNull: false,
     },
     excerpt: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("medium"),
     },
     keywords: {
       type: DataTypes.STRING(255),
@@ -48,15 +48,15 @@ const Article = sequelize.define(
       type: DataTypes.DATEONLY,
     },
     contentID: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("long"),
       allowNull: false,
     },
     contentEN: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("long"),
       allowNull: false,
     },
     contentZN: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("long"),
       allowNull: false,
     },
   },

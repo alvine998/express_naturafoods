@@ -1,5 +1,5 @@
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;

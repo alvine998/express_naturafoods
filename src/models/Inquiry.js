@@ -31,7 +31,7 @@ const Inquiry = sequelize.define(
       validate: { isEmail: true },
     },
     message: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("medium"),
       allowNull: true,
     },
     source: {

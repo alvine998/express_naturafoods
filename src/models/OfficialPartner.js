@@ -14,7 +14,7 @@ const OfficialPartner = sequelize.define(
       allowNull: false,
     },
     description: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("medium"),
       allowNull: true,
     },
     images: {

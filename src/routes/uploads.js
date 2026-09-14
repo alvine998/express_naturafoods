@@ -16,7 +16,7 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 // Use memoryStorage so we can either upload to R2 or write to disk
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max, but image check 5MB
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max, but image check 10MB
   fileFilter: (req, file, cb) => {
     // accept image/* and video/*
     if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) cb(null, true);
@@ -26,7 +26,7 @@ const upload = multer({
 
 function handleMulterError(err, req, res, next) {
   if (err) {
-    if (err.code === "LIMIT_FILE_SIZE") return sendError(res, { code: "PAYLOAD_TOO_LARGE", message: "File too large (max 5MB image, 20MB video)", status: 413 });
+    if (err.code === "LIMIT_FILE_SIZE") return sendError(res, { code: "PAYLOAD_TOO_LARGE", message: "File too large (max 10MB image, 20MB video)", status: 413 });
     if (err.message && err.message.includes("Only image and video")) return sendError(res, { code: "VALIDATION_ERROR", message: err.message, status: 422 });
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
   }
@@ -65,9 +65,9 @@ async function processImageBuffer(buffer, originalMime) {
 
 async function storeFile({ buffer, originalname, mimetype, folder, size }) {
   const safeFolder = (folder || "general").replace(/[^a-z0-9-_]/gi, "") || "general";
-  // image size limit 5MB, video 20MB (already enforced by multer, but check again after processing)
-  if (mimetype.startsWith("image/") && size > 5 * 1024 * 1024) {
-    throw Object.assign(new Error("Image must be <5MB"), { code: "PAYLOAD_TOO_LARGE", status: 413 });
+  // image size limit 10MB, video 20MB (already enforced by multer, but check again after processing)
+  if (mimetype.startsWith("image/") && size > 10 * 1024 * 1024) {
+    throw Object.assign(new Error("Image must be <10MB"), { code: "PAYLOAD_TOO_LARGE", status: 413 });
   }
   if (size > 20 * 1024 * 1024) {
     throw Object.assign(new Error("File too large"), { code: "PAYLOAD_TOO_LARGE", status: 413 });
@@ -142,7 +142,7 @@ router.post("/base64", async (req, res) => {
     const mime = matches[1];
     const buffer = Buffer.from(matches[2], "base64");
     if (!mime.startsWith("image/") && !mime.startsWith("video/")) return sendError(res, { code: "VALIDATION_ERROR", message: "Only image and video are allowed", status: 422 });
-    if (mime.startsWith("image/") && buffer.length > 5 * 1024 * 1024) return sendError(res, { code: "PAYLOAD_TOO_LARGE", message: "Image must be <5MB", status: 413 });
+    if (mime.startsWith("image/") && buffer.length > 10 * 1024 * 1024) return sendError(res, { code: "PAYLOAD_TOO_LARGE", message: "Image must be <10MB", status: 413 });
     if (buffer.length > 20 * 1024 * 1024) return sendError(res, { code: "PAYLOAD_TOO_LARGE", message: "File too large", status: 413 });
 
     const result = await storeFile({

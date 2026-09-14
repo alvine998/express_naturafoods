@@ -13,7 +13,7 @@ const Innovation = sequelize.define(
       allowNull: false,
     },
     desc: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("medium"),
       allowNull: true,
     },
     tag: {

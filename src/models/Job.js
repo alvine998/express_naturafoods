@@ -25,7 +25,7 @@ const Job = sequelize.define(
       allowNull: true,
     },
     desc: {
-      type: DataTypes.TEXT,
+      type: DataTypes.TEXT("medium"),
       allowNull: true,
     },
     isPublished: {

@@ -7,6 +7,8 @@ const Article = require("../models/Article");
 const Education = require("../models/Education");
 const Innovation = require("../models/Innovation");
 const Job = require("../models/Job");
+const Sale = require("../models/Sale");
+const HomeBrand = require("../models/HomeBrand");
 const Inquiry = require("../models/Inquiry");
 const User = require("../models/User");
 const { AssistantConfig } = require("../models/AssistantConfig");
@@ -26,6 +28,8 @@ router.get("/", async (req, res) => {
       education,
       innovation,
       jobs,
+      sales,
+      homeBrands,
       inquiries,
       users,
       assistantCfg,
@@ -39,6 +43,8 @@ router.get("/", async (req, res) => {
       Education.count().catch(() => 0),
       Innovation.count().catch(() => 0),
       Job.count().catch(() => 0),
+      Sale.count().catch(() => 0),
+      HomeBrand.count().catch(() => 0),
       Inquiry.count().catch(() => 0),
       User.count().catch(() => 0),
       AssistantConfig.findByPk("default").then((c) => (c ? (c.knowledge || []).length : 0)).catch(() => 0),
@@ -57,6 +63,8 @@ router.get("/", async (req, res) => {
       education,
       innovation,
       jobs,
+      sales,
+      homeBrands,
       inquiries,
       users,
       assistantEntries: assistantCfg,
