@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "4016:4016"
+    env_file:
+      - .env
+    environment:
+      - PORT=4016
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
