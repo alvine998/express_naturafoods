@@ -1,12 +1,12 @@
 const express = require("express");
 const Sale = require("../models/Sale");
-const authMiddleware = require("../middleware/auth");
+const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
 const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
-adminRouter.use(authMiddleware);
+adminRouter.use(publicGetAuth);
 
 function resolvePublished(body) {
   if (body.isPublished !== undefined) return !!body.isPublished;

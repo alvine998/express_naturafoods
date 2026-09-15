@@ -1,11 +1,11 @@
 const express = require("express");
 const SiteContent = require("../models/SiteContent");
-const authMiddleware = require("../middleware/auth");
+const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
-adminRouter.use(authMiddleware);
+adminRouter.use(publicGetAuth);
 
 // GET /site-content -> all locales as Record<Locale, Record<string, unknown>>
 publicRouter.get("/", async (req, res) => {

@@ -1,12 +1,12 @@
 const express = require("express");
 const Education = require("../models/Education");
-const authMiddleware = require("../middleware/auth");
+const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
 const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
-adminRouter.use(authMiddleware);
+adminRouter.use(publicGetAuth);
 
 function serialize(e) {
   const j = e.toJSON();

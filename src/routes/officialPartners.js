@@ -1,13 +1,13 @@
 const express = require("express");
 const { Op } = require("sequelize");
 const OfficialPartner = require("../models/OfficialPartner");
-const authMiddleware = require("../middleware/auth");
+const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
 const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
-adminRouter.use(authMiddleware);
+adminRouter.use(publicGetAuth);
 
 function serialize(p) {
   const j = p.toJSON();

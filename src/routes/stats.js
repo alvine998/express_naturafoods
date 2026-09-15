@@ -1,5 +1,5 @@
 const express = require("express");
-const authMiddleware = require("../middleware/auth");
+const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
 const Product = require("../models/Product");
 const OfficialPartner = require("../models/OfficialPartner");
@@ -15,7 +15,7 @@ const { AssistantConfig } = require("../models/AssistantConfig");
 const SiteContent = require("../models/SiteContent");
 
 const router = express.Router();
-router.use(authMiddleware);
+router.use(publicGetAuth);
 
 router.get("/", async (req, res) => {
   try {

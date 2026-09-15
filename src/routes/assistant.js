@@ -1,11 +1,11 @@
 const express = require("express");
 const { AssistantConfig, DEFAULT_ASSISTANT } = require("../models/AssistantConfig");
-const authMiddleware = require("../middleware/auth");
+const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
-adminRouter.use(authMiddleware);
+adminRouter.use(publicGetAuth);
 
 function serialize(cfg) {
   const j = cfg.toJSON();
