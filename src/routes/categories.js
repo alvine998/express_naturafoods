@@ -18,6 +18,7 @@ function serialize(c) {
     name: j.name,
     description: j.description,
     isActive: j.isActive ?? j.is_active ?? true,
+    isHighlight: j.isHighlight ?? j.is_highlight ?? false,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -31,6 +32,10 @@ publicRouter.get("/", async (req, res) => {
     if (req.query.isActive !== undefined) {
       const v = String(req.query.isActive).toLowerCase();
       if (v === "true" || v === "false") where.isActive = v === "true";
+    }
+    if (req.query.isHighlight !== undefined) {
+      const v = String(req.query.isHighlight).toLowerCase();
+      if (v === "true" || v === "false") where.isHighlight = v === "true";
     }
     if (req.query.q) {
       const search = buildSearchWhere(req.query.q, ["name", "slug"]);
@@ -59,7 +64,7 @@ publicRouter.get("/:slug", async (req, res) => {
 // ADMIN: POST /admin/categories
 adminRouter.post("/", async (req, res) => {
   try {
-    const { slug, name, description, isActive } = req.body;
+    const { slug, name, description, isActive, isHighlight } = req.body;
     const slugErr = validateSlug(slug);
     if (slugErr) return sendError(res, { code: "VALIDATION_ERROR", message: slugErr, status: 422, details: { slug: slugErr } });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
@@ -68,6 +73,7 @@ adminRouter.post("/", async (req, res) => {
       name,
       description,
       isActive: isActive !== undefined ? !!isActive : true,
+      isHighlight: isHighlight !== undefined ? !!isHighlight : false,
     });
     return sendSuccess(res, serialize(category), null, 201);
   } catch (err) {
@@ -86,7 +92,7 @@ adminRouter.put("/:slug", async (req, res) => {
   try {
     const category = await Category.findOne({ where: { slug: req.params.slug } });
     if (!category) return sendError(res, { code: "NOT_FOUND", message: "Category not found", status: 404 });
-    const { slug, name, description, isActive } = req.body;
+    const { slug, name, description, isActive, isHighlight } = req.body;
     if (slug && slug !== category.slug) {
       const err = validateSlug(slug);
       if (err) return sendError(res, { code: "VALIDATION_ERROR", message: err, status: 422 });
@@ -97,6 +103,7 @@ adminRouter.put("/:slug", async (req, res) => {
     if (name !== undefined) category.name = name;
     if (description !== undefined) category.description = description;
     if (isActive !== undefined) category.isActive = !!isActive;
+    if (isHighlight !== undefined) category.isHighlight = !!isHighlight;
     await category.save();
     return sendSuccess(res, serialize(category));
   } catch (err) {
@@ -116,6 +123,21 @@ adminRouter.patch("/:slug/active", async (req, res) => {
     category.isActive = !!isActive;
     await category.save();
     return sendSuccess(res, { slug: category.slug, isActive: category.isActive });
+  } catch (err) {
+    return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
+  }
+});
+
+// ADMIN: PATCH /admin/categories/:slug/highlight
+adminRouter.patch("/:slug/highlight", async (req, res) => {
+  try {
+    const category = await Category.findOne({ where: { slug: req.params.slug } });
+    if (!category) return sendError(res, { code: "NOT_FOUND", message: "Category not found", status: 404 });
+    const { isHighlight } = req.body;
+    if (isHighlight === undefined) return sendError(res, { code: "VALIDATION_ERROR", message: "isHighlight is required", status: 422 });
+    category.isHighlight = !!isHighlight;
+    await category.save();
+    return sendSuccess(res, { slug: category.slug, isHighlight: category.isHighlight });
   } catch (err) {
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
   }

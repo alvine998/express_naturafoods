@@ -33,11 +33,17 @@ const Category = sequelize.define(
       defaultValue: true,
       field: "is_active",
     },
+    isHighlight: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: "is_highlight",
+    },
   },
   {
     tableName: "categories",
     underscored: true,
-    indexes: [{ fields: ["slug"], unique: true }, { fields: ["is_active"] }],
+    indexes: [{ fields: ["slug"], unique: true }, { fields: ["is_active"] }, { fields: ["is_highlight"] }],
   }
 );
 
