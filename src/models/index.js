@@ -14,6 +14,7 @@ const Inquiry = require("./Inquiry");
 const SiteContent = require("./SiteContent");
 const { AssistantConfig } = require("./AssistantConfig");
 const HomeBrand = require("./HomeBrand");
+const SocialMedia = require("./SocialMedia");
 const TokenBlacklist = require("./TokenBlacklist");
 const Otp = require("./Otp");
 const LoginAttempt = require("./LoginAttempt");
@@ -40,6 +41,7 @@ module.exports = {
   SiteContent,
   AssistantConfig,
   HomeBrand,
+  SocialMedia,
   TokenBlacklist,
   Otp,
   LoginAttempt,
