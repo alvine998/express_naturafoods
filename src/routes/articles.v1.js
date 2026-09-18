@@ -129,7 +129,15 @@ publicRouter.get("/", async (req, res) => {
         order = [[ "createdAt", s.includes("asc") ? "ASC" : "DESC" ]];
       }
     }
-    const { count, rows } = await Article.findAndCountAll({ where, order, limit, offset });
+    // list responses omit the full article HTML (can be many MB per locale);
+    // GET /articles/:slug returns it
+    const { count, rows } = await Article.findAndCountAll({
+      where,
+      order,
+      limit,
+      offset,
+      attributes: { exclude: ["contentID", "contentEN", "contentZN"] },
+    });
     return sendSuccess(res, rows.map(serialize), buildMeta(page, limit, count));
   } catch (err) {
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
