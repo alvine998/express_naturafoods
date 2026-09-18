@@ -265,14 +265,14 @@ router.post("/logout", authMiddleware, async (req, res) => {
           const rt = await RefreshToken.findOne({ where: { jti: dec.jti } });
           if (rt) await rt.update({ revoked_at: new Date() });
         }
-      } catch (_) {}
+      } catch { /* ignore */ }
     } else if (req.body.refreshToken) {
       try {
         const dec = jwt.decode(req.body.refreshToken);
         if (dec && dec.jti) {
           await RefreshToken.update({ revoked_at: new Date() }, { where: { jti: dec.jti } });
         }
-      } catch (_) {}
+      } catch { /* ignore */ }
     }
     if (contract) return sendSuccess(res, null, null, 200);
     res.json({ message: "Logged out" });

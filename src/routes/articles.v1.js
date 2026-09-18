@@ -145,7 +145,7 @@ publicRouter.get("/:slug", async (req, res) => {
       // fallback try PK if uuid
       try {
         article = await Article.findByPk(param);
-      } catch (_) {}
+      } catch { /* ignore */ }
     }
     if (!article) return sendError(res, { code: "NOT_FOUND", message: "Article not found", status: 404 });
     return sendSuccess(res, serialize(article));

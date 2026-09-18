@@ -248,6 +248,7 @@ const options = {
             note: { type: "string", nullable: true },
             tag: { type: "string", nullable: true },
             img: { type: "string", description: "Image URL" },
+            file: { type: "string", nullable: true, description: "File URL" },
             desc: { type: "string", nullable: true },
             isHighlight: { type: "boolean" },
             isPublished: { type: "boolean" },
@@ -268,6 +269,7 @@ const options = {
             cat: { type: "string", enum: ["choco", "matcha", "other"] },
             title: { type: "string", minLength: 2, maxLength: 120 },
             img: { type: "string" },
+            file: { type: "string" },
             type: {
               type: "string",
               enum: ["home-brand", "small-pack", "general"],

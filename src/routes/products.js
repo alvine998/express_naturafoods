@@ -25,6 +25,7 @@ function serialize(p) {
     note: j.note,
     tag: j.tag,
     img: j.img,
+    file: j.file,
     desc: j.desc,
     isHighlight: j.isHighlight ?? j.is_highlight ?? false,
     isPublished: j.isPublished ?? j.is_published ?? true,
@@ -106,7 +107,7 @@ publicRouter.get("/:slug", async (req, res) => {
 // ADMIN: POST /admin/products
 adminRouter.post("/", async (req, res) => {
   try {
-    const { slug, categoryId, type, title, note, tag, img, desc, isHighlight, isPublished } = req.body;
+    const { slug, categoryId, type, title, note, tag, img, file, desc, isHighlight, isPublished } = req.body;
     const slugErr = validateSlug(slug);
     if (slugErr) return sendError(res, { code: "VALIDATION_ERROR", message: slugErr, status: 422, details: { slug: slugErr } });
     if (!categoryId) return sendError(res, { code: "VALIDATION_ERROR", message: "categoryId is required", status: 422 });
@@ -122,6 +123,7 @@ adminRouter.post("/", async (req, res) => {
       note,
       tag,
       img,
+      file,
       desc,
       isHighlight: !!isHighlight,
       isPublished: isPublished !== undefined ? !!isPublished : true,
@@ -144,7 +146,7 @@ adminRouter.put("/:slug", async (req, res) => {
   try {
     const product = await Product.findOne({ where: { slug: req.params.slug } });
     if (!product) return sendError(res, { code: "NOT_FOUND", message: "Product not found", status: 404 });
-    const { slug, categoryId, type, title, note, tag, img, desc, isHighlight, isPublished } = req.body;
+    const { slug, categoryId, type, title, note, tag, img, file, desc, isHighlight, isPublished } = req.body;
     if (slug && slug !== product.slug) {
       const err = validateSlug(slug);
       if (err) return sendError(res, { code: "VALIDATION_ERROR", message: err, status: 422 });
@@ -162,6 +164,7 @@ adminRouter.put("/:slug", async (req, res) => {
     if (note !== undefined) product.note = note;
     if (tag !== undefined) product.tag = tag;
     if (img !== undefined) product.img = img;
+    if (file !== undefined) product.file = file;
     if (desc !== undefined) product.desc = desc;
     if (isHighlight !== undefined) product.isHighlight = !!isHighlight;
     if (isPublished !== undefined) product.isPublished = !!isPublished;

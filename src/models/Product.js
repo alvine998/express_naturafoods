@@ -49,6 +49,10 @@ const Product = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: false,
     },
+    file: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
     desc: {
       type: DataTypes.TEXT("medium"),
       allowNull: true,

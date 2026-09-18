@@ -94,7 +94,7 @@ const { data: highlighted2 } = await apiFetch<Product[]>("/products/highlighted"
 const { data: product } = await apiFetch<Product>(`/products/${slug}`);
 
 // admin
-await apiFetch("/admin/products", { method:"POST", body: JSON.stringify({slug,cat,type,title,note,tag,img,desc,isHighlight}) });
+await apiFetch("/admin/products", { method:"POST", body: JSON.stringify({slug,cat,type,title,note,tag,img,file,desc,isHighlight}) });
 await apiFetch(`/admin/products/${slug}`, { method:"PUT", body: JSON.stringify({...product}) });
 await apiFetch(`/admin/products/${slug}/highlight`, { method:"PATCH", body: JSON.stringify({isHighlight:true}) });
 await apiFetch(`/admin/products/${slug}`, { method:"DELETE" });
