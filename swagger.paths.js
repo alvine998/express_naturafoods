@@ -2063,7 +2063,7 @@
  *     summary: Upload file (admin, multipart)
  *     description: |
   *       Uploads a file via multipart form data. Images (max 10MB) are auto-converted to WebP (1600px max).
- *       Videos up to 20MB are allowed as-is. Files are stored to Cloudflare R2 or local disk.
+ *       Videos and PDFs up to 20MB are allowed as-is. Files are stored to Cloudflare R2 or local disk.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -2077,7 +2077,7 @@
  *               file:
  *                 type: string
  *                 format: binary
- *                 description: Image or video file
+ *                 description: Image, video, or PDF file
  *               folder:
  *                 type: string
  *                 default: general
@@ -2097,7 +2097,7 @@
  *       413:
  *         description: File too large
  *       422:
- *         description: No file provided
+ *         description: No file provided or unsupported file type
  *
  *   delete:
  *     tags: [Uploads]
@@ -2171,7 +2171,7 @@
  *       413:
  *         description: File too large
  *       422:
- *         description: Invalid data URL or non-image/video
+ *         description: Invalid data URL or unsupported file type
  */
 
 // ─── STATS ─────────────────────────────────────────────────────────

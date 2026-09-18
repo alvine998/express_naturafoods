@@ -13,21 +13,23 @@ router.use(authMiddleware);
 const uploadDir = path.join(__dirname, "../../uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
+const ALLOWED_TYPES_MESSAGE = "Only image, video, and PDF files are allowed";
+
 // Use memoryStorage so we can either upload to R2 or write to disk
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max, but image check 10MB
   fileFilter: (req, file, cb) => {
-    // accept image/* and video/*
-    if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) cb(null, true);
-    else cb(new Error("Only image and video files are allowed"));
+    // accept image/*, video/*, and PDF
+    if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/") || file.mimetype === "application/pdf") cb(null, true);
+    else cb(new Error(ALLOWED_TYPES_MESSAGE));
   },
 });
 
 function handleMulterError(err, req, res, next) {
   if (err) {
     if (err.code === "LIMIT_FILE_SIZE") return sendError(res, { code: "PAYLOAD_TOO_LARGE", message: "File too large (max 10MB image, 20MB video)", status: 413 });
-    if (err.message && err.message.includes("Only image and video")) return sendError(res, { code: "VALIDATION_ERROR", message: err.message, status: 422 });
+    if (err.message && err.message.includes(ALLOWED_TYPES_MESSAGE)) return sendError(res, { code: "VALIDATION_ERROR", message: err.message, status: 422 });
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
   }
   next();
@@ -141,7 +143,7 @@ router.post("/base64", async (req, res) => {
     if (!matches) return sendError(res, { code: "VALIDATION_ERROR", message: "Invalid dataUrl", status: 422 });
     const mime = matches[1];
     const buffer = Buffer.from(matches[2], "base64");
-    if (!mime.startsWith("image/") && !mime.startsWith("video/")) return sendError(res, { code: "VALIDATION_ERROR", message: "Only image and video are allowed", status: 422 });
+    if (!mime.startsWith("image/") && !mime.startsWith("video/") && mime !== "application/pdf") return sendError(res, { code: "VALIDATION_ERROR", message: "Only image, video, and PDF are allowed", status: 422 });
     if (mime.startsWith("image/") && buffer.length > 10 * 1024 * 1024) return sendError(res, { code: "PAYLOAD_TOO_LARGE", message: "Image must be <10MB", status: 413 });
     if (buffer.length > 20 * 1024 * 1024) return sendError(res, { code: "PAYLOAD_TOO_LARGE", message: "File too large", status: 413 });
 
