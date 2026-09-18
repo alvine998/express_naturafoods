@@ -132,7 +132,7 @@ adminRouter.post("/", async (req, res) => {
       note,
       tag,
       img,
-      file,
+      file: file || null,
       desc,
       isHighlight: !!isHighlight,
       isPublished: isPublished !== undefined ? !!isPublished : true,
@@ -182,7 +182,7 @@ adminRouter.put("/:slug", async (req, res) => {
     if (note !== undefined) product.note = note;
     if (tag !== undefined) product.tag = tag;
     if (img !== undefined) product.img = img;
-    if (file !== undefined) product.file = file;
+    if (file !== undefined) product.file = file || null;
     if (desc !== undefined) product.desc = desc;
     if (isHighlight !== undefined) product.isHighlight = !!isHighlight;
     if (isPublished !== undefined) product.isPublished = !!isPublished;

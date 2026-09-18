@@ -279,7 +279,7 @@ const options = {
             cat: { type: "string", enum: ["choco", "matcha", "other"] },
             title: { type: "string", minLength: 2, maxLength: 120 },
             img: { type: "string" },
-            file: { type: "string" },
+            file: { type: "string", nullable: true, description: "Optional file URL; null/empty clears it" },
             brandId: {
               type: "string",
               format: "uuid",
