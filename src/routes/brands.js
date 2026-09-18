@@ -1,6 +1,8 @@
 const express = require("express");
+const { Op } = require("sequelize");
 const Brand = require("../models/Brand");
 const Product = require("../models/Product");
+const HomeBrand = require("../models/HomeBrand");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
 const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
@@ -129,8 +131,16 @@ adminRouter.delete("/:slug", async (req, res) => {
   try {
     const brand = await Brand.findOne({ where: { slug: req.params.slug } });
     if (!brand) return sendError(res, { code: "NOT_FOUND", message: "Brand not found", status: 404 });
-    // clear references explicitly: the FK constraint may be absent on non-altered DBs
+    // clear references explicitly: FK constraints may be absent on non-altered DBs
     await Product.update({ brandId: null }, { where: { brandId: brand.id } });
+    const homeBrands = await HomeBrand.findAll({ where: { brandIds: { [Op.not]: null } } });
+    for (const hb of homeBrands) {
+      const ids = Array.isArray(hb.brandIds) ? hb.brandIds : [];
+      if (ids.includes(brand.id)) {
+        hb.brandIds = ids.filter((id) => id !== brand.id);
+        await hb.save();
+      }
+    }
     await brand.destroy();
     return res.status(204).end();
   } catch (err) {

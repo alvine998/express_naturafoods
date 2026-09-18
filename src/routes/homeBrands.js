@@ -1,5 +1,6 @@
 const express = require("express");
 const HomeBrand = require("../models/HomeBrand");
+const Brand = require("../models/Brand");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
 const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
@@ -15,9 +16,24 @@ function serialize(h) {
     name: j.name,
     image: j.image,
     desc: j.desc,
+    brandIds: Array.isArray(j.brandIds) ? j.brandIds : [],
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
+}
+
+// returns null when the payload is not an array of ids
+function normalizeBrandIds(input) {
+  if (input === undefined || input === null) return [];
+  if (!Array.isArray(input)) return null;
+  return [...new Set(input.map((v) => String(v).trim()).filter(Boolean))];
+}
+
+async function findMissingBrandIds(brandIds) {
+  if (!brandIds.length) return [];
+  const found = await Brand.findAll({ where: { id: brandIds }, attributes: ["id"] });
+  const foundIds = new Set(found.map((b) => b.id));
+  return brandIds.filter((id) => !foundIds.has(id));
 }
 
 publicRouter.get("/", async (req, res) => {
@@ -47,7 +63,13 @@ adminRouter.post("/", async (req, res) => {
     const { id, name, image, desc } = req.body;
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
-    const h = await HomeBrand.create({ id, name, image, desc });
+    const brandIds = normalizeBrandIds(req.body.brandIds);
+    if (brandIds === null) return sendError(res, { code: "VALIDATION_ERROR", message: "brandIds must be an array of brand ids", status: 422 });
+    const missing = await findMissingBrandIds(brandIds);
+    if (missing.length) {
+      return sendError(res, { code: "VALIDATION_ERROR", message: "Brand not found", status: 422, details: { brandIds: missing } });
+    }
+    const h = await HomeBrand.create({ id, name, image, desc, brandIds });
     return sendSuccess(res, serialize(h), null, 201);
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
@@ -59,6 +81,17 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const h = await HomeBrand.findByPk(req.params.id);
     if (!h) return sendError(res, { code: "NOT_FOUND", message: "Home brand not found", status: 404 });
+
+    if (req.body.brandIds !== undefined) {
+      const brandIds = normalizeBrandIds(req.body.brandIds);
+      if (brandIds === null) return sendError(res, { code: "VALIDATION_ERROR", message: "brandIds must be an array of brand ids", status: 422 });
+      const missing = await findMissingBrandIds(brandIds);
+      if (missing.length) {
+        return sendError(res, { code: "VALIDATION_ERROR", message: "Brand not found", status: 422, details: { brandIds: missing } });
+      }
+      h.brandIds = brandIds;
+    }
+
     if (req.body.id && req.body.id !== h.id) {
       const exists = await HomeBrand.findByPk(req.body.id);
       if (exists) return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
@@ -70,6 +103,7 @@ adminRouter.put("/:id", async (req, res) => {
     await h.save();
     return sendSuccess(res, serialize(h));
   } catch (err) {
+    if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
   }
 });

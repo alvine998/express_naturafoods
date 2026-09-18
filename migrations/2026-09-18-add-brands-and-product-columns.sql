@@ -62,7 +62,22 @@ ALTER TABLE `products`
   FOREIGN KEY (`brand_id`) REFERENCES `brands` (`id`)
   ON DELETE SET NULL ON UPDATE CASCADE;
 
+-- 5. Home brand -> brands as a JSON array of brand ids
+ALTER TABLE `home_brands`
+  ADD COLUMN `brand_ids` json DEFAULT NULL AFTER `desc`;
+
+ALTER TABLE `home_brands`
+  MODIFY COLUMN `brand_ids` json NULL DEFAULT NULL;
+
+-- Only needed if an earlier revision of this file created the junction table
+-- (the home brand links now live in home_brands.brand_ids):
+-- UPDATE `home_brands` hb
+--   SET hb.`brand_ids` = (SELECT JSON_ARRAYAGG(hbb.`brand_id`) FROM `home_brand_brands` hbb WHERE hbb.`home_brand_id` = hb.`id`)
+--   WHERE EXISTS (SELECT 1 FROM `home_brand_brands` hbb WHERE hbb.`home_brand_id` = hb.`id`);
+DROP TABLE IF EXISTS `home_brand_brands`;
+
 -- Rollback (run manually, in this order)
+-- ALTER TABLE `home_brands` DROP COLUMN `brand_ids`;
 -- ALTER TABLE `products` DROP FOREIGN KEY `products_brand_id_foreign`;
 -- ALTER TABLE `products` DROP KEY `products_brand_id`;
 -- ALTER TABLE `products` DROP COLUMN `brand_id`;

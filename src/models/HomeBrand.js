@@ -20,6 +20,11 @@ const HomeBrand = sequelize.define(
       type: DataTypes.TEXT("medium"),
       allowNull: true,
     },
+    brandIds: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      field: "brand_ids",
+    },
   },
   {
     tableName: "home_brands",

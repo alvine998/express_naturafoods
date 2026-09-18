@@ -495,6 +495,11 @@ const options = {
             name: { type: "string" },
             image: { type: "string", nullable: true },
             desc: { type: "string", nullable: true },
+            brandIds: {
+              type: "array",
+              items: { type: "string", format: "uuid" },
+              description: "Ids of the brands for this home brand (stored as JSON)",
+            },
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" },
           },
@@ -507,6 +512,11 @@ const options = {
             name: { type: "string", maxLength: 150 },
             image: { type: "string" },
             desc: { type: "string" },
+            brandIds: {
+              type: "array",
+              items: { type: "string", format: "uuid" },
+              description: "Optional brand ids; replaces the existing value on PUT, [] clears it",
+            },
           },
         },
 
