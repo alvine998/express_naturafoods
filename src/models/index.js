@@ -5,6 +5,7 @@ const UserRole = require("./UserRole");
 const Article = require("./Article");
 const Product = require("./Product");
 const Category = require("./Category");
+const Brand = require("./Brand");
 const OfficialPartner = require("./OfficialPartner");
 const Education = require("./Education");
 const Innovation = require("./Innovation");
@@ -24,6 +25,9 @@ const RefreshToken = require("./RefreshToken");
 Category.hasMany(Product, { foreignKey: "category_id", as: "products" });
 Product.belongsTo(Category, { foreignKey: "category_id", as: "category" });
 
+Brand.hasMany(Product, { foreignKey: "brand_id", as: "products" });
+Product.belongsTo(Brand, { foreignKey: "brand_id", as: "brand", onDelete: "SET NULL" });
+
 module.exports = {
   sequelize,
   User,
@@ -32,6 +36,7 @@ module.exports = {
   Article,
   Product,
   Category,
+  Brand,
   OfficialPartner,
   Education,
   Innovation,

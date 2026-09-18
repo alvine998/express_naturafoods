@@ -2,6 +2,7 @@ const express = require("express");
 const { Op } = require("sequelize");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
+const Brand = require("../models/Brand");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
 const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
@@ -20,6 +21,8 @@ function serialize(p) {
     slug: j.slug,
     categoryId: j.categoryId ?? j.category_id,
     category: j.category ? { id: j.category.id, slug: j.category.slug, name: j.category.name } : null,
+    brandId: j.brandId ?? j.brand_id ?? null,
+    brand: j.brand ? { id: j.brand.id, slug: j.brand.slug, name: j.brand.name } : null,
     type: j.type,
     title: j.title,
     note: j.note,
@@ -40,6 +43,7 @@ publicRouter.get("/", async (req, res) => {
     const { page, limit, offset, sort } = parsePagination(req.query, { defaultLimit: 8, maxLimit: 50 });
     const where = {};
     if (req.query.categoryId) where.categoryId = req.query.categoryId;
+    if (req.query.brandId) where.brandId = req.query.brandId;
     if (req.query.type) where.type = req.query.type;
     if (req.query.isHighlight !== undefined) {
       const v = String(req.query.isHighlight).toLowerCase();
@@ -56,7 +60,7 @@ publicRouter.get("/", async (req, res) => {
 
     const { count, rows } = await Product.findAndCountAll({
       where,
-      include: [{ model: Category, as: "category" }],
+      include: [{ model: Category, as: "category" }, { model: Brand, as: "brand" }],
       order: sort,
       limit,
       offset,
@@ -77,7 +81,7 @@ publicRouter.get("/highlighted", async (req, res) => {
     const { page, limit, offset, sort } = parsePagination(req.query, { defaultLimit: 8, maxLimit: 50 });
     const { count, rows } = await Product.findAndCountAll({
       where,
-      include: [{ model: Category, as: "category" }],
+      include: [{ model: Category, as: "category" }, { model: Brand, as: "brand" }],
       order: sort,
       limit,
       offset,
@@ -95,7 +99,7 @@ publicRouter.get("/:slug", async (req, res) => {
   try {
     const p = await Product.findOne({
       where: { slug: req.params.slug },
-      include: [{ model: Category, as: "category" }],
+      include: [{ model: Category, as: "category" }, { model: Brand, as: "brand" }],
     });
     if (!p) return sendError(res, { code: "NOT_FOUND", message: "Product not found", status: 404 });
     return sendSuccess(res, serialize(p));
@@ -107,17 +111,22 @@ publicRouter.get("/:slug", async (req, res) => {
 // ADMIN: POST /admin/products
 adminRouter.post("/", async (req, res) => {
   try {
-    const { slug, categoryId, type, title, note, tag, img, file, desc, isHighlight, isPublished } = req.body;
+    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc, isHighlight, isPublished } = req.body;
     const slugErr = validateSlug(slug);
     if (slugErr) return sendError(res, { code: "VALIDATION_ERROR", message: slugErr, status: 422, details: { slug: slugErr } });
     if (!categoryId) return sendError(res, { code: "VALIDATION_ERROR", message: "categoryId is required", status: 422 });
     const catExists = await Category.findByPk(categoryId);
     if (!catExists) return sendError(res, { code: "VALIDATION_ERROR", message: "Category not found", status: 422 });
+    if (brandId) {
+      const brandExists = await Brand.findByPk(brandId);
+      if (!brandExists) return sendError(res, { code: "VALIDATION_ERROR", message: "Brand not found", status: 422 });
+    }
     if (!title) return sendError(res, { code: "VALIDATION_ERROR", message: "title is required", status: 422 });
     if (!img) return sendError(res, { code: "VALIDATION_ERROR", message: "img is required", status: 422 });
     const product = await Product.create({
       slug: slug.toLowerCase(),
       categoryId,
+      brandId: brandId || null,
       type: type || "general",
       title,
       note,
@@ -128,7 +137,7 @@ adminRouter.post("/", async (req, res) => {
       isHighlight: !!isHighlight,
       isPublished: isPublished !== undefined ? !!isPublished : true,
     });
-    const created = await Product.findByPk(product.id, { include: [{ model: Category, as: "category" }] });
+    const created = await Product.findByPk(product.id, { include: [{ model: Category, as: "category" }, { model: Brand, as: "brand" }] });
     return sendSuccess(res, serialize(created), null, 201);
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") {
@@ -146,7 +155,7 @@ adminRouter.put("/:slug", async (req, res) => {
   try {
     const product = await Product.findOne({ where: { slug: req.params.slug } });
     if (!product) return sendError(res, { code: "NOT_FOUND", message: "Product not found", status: 404 });
-    const { slug, categoryId, type, title, note, tag, img, file, desc, isHighlight, isPublished } = req.body;
+    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc, isHighlight, isPublished } = req.body;
     if (slug && slug !== product.slug) {
       const err = validateSlug(slug);
       if (err) return sendError(res, { code: "VALIDATION_ERROR", message: err, status: 422 });
@@ -159,6 +168,15 @@ adminRouter.put("/:slug", async (req, res) => {
       if (!catExists) return sendError(res, { code: "VALIDATION_ERROR", message: "Category not found", status: 422 });
       product.categoryId = categoryId;
     }
+    if (brandId !== undefined) {
+      if (brandId === null || brandId === "") {
+        product.brandId = null;
+      } else {
+        const brandExists = await Brand.findByPk(brandId);
+        if (!brandExists) return sendError(res, { code: "VALIDATION_ERROR", message: "Brand not found", status: 422 });
+        product.brandId = brandId;
+      }
+    }
     if (type !== undefined) product.type = type;
     if (title !== undefined) product.title = title;
     if (note !== undefined) product.note = note;
@@ -169,7 +187,7 @@ adminRouter.put("/:slug", async (req, res) => {
     if (isHighlight !== undefined) product.isHighlight = !!isHighlight;
     if (isPublished !== undefined) product.isPublished = !!isPublished;
     await product.save();
-    const updated = await Product.findByPk(product.id, { include: [{ model: Category, as: "category" }] });
+    const updated = await Product.findByPk(product.id, { include: [{ model: Category, as: "category" }, { model: Brand, as: "brand" }] });
     return sendSuccess(res, serialize(updated));
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "Slug already exists", status: 409 });

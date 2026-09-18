@@ -65,6 +65,10 @@ const {
   adminRouter: categoriesAdminRouter,
 } = require("./src/routes/categories");
 const {
+  publicRouter: brandsPublicRouter,
+  adminRouter: brandsAdminRouter,
+} = require("./src/routes/brands");
+const {
   publicRouter: socialMediaPublicRouter,
   adminRouter: socialMediaAdminRouter,
 } = require("./src/routes/socialMedia");
@@ -132,6 +136,7 @@ app.use("/api/v1/auth", authRouter);
 // Public resources
 app.use("/api/v1/products", productsPublicRouter);
 app.use("/api/v1/categories", categoriesPublicRouter);
+app.use("/api/v1/brands", brandsPublicRouter);
 app.use("/api/v1/social-media", socialMediaPublicRouter);
 app.use("/api/v1/official-partners", partnersPublicRouter);
 app.use("/api/v1/education", educationPublicRouter);
@@ -147,6 +152,7 @@ app.use("/api/v1/articles", articlesPublicRouter);
 // Admin resources (protected)
 app.use("/api/v1/admin/products", productsAdminRouter);
 app.use("/api/v1/admin/categories", categoriesAdminRouter);
+app.use("/api/v1/admin/brands", brandsAdminRouter);
 app.use("/api/v1/admin/social-media", socialMediaAdminRouter);
 app.use("/api/v1/admin/official-partners", partnersAdminRouter);
 app.use("/api/v1/admin/education", educationAdminRouter);

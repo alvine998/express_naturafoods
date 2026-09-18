@@ -27,6 +27,15 @@ const Product = sequelize.define(
         key: "id",
       },
     },
+    brandId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: "brand_id",
+      references: {
+        model: "brands",
+        key: "id",
+      },
+    },
     type: {
       type: DataTypes.ENUM("home-brand", "small-pack", "general"),
       allowNull: false,
@@ -73,7 +82,7 @@ const Product = sequelize.define(
   {
     tableName: "products",
     underscored: true,
-    indexes: [{ fields: ["is_highlight"] }, { fields: ["type"] }, { fields: ["category_id"] }],
+    indexes: [{ fields: ["is_highlight"] }, { fields: ["type"] }, { fields: ["category_id"] }, { fields: ["brand_id"] }],
   }
 );
 

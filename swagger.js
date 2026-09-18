@@ -249,6 +249,16 @@ const options = {
             tag: { type: "string", nullable: true },
             img: { type: "string", description: "Image URL" },
             file: { type: "string", nullable: true, description: "File URL" },
+            brandId: { type: "string", format: "uuid", nullable: true },
+            brand: {
+              type: "object",
+              nullable: true,
+              properties: {
+                id: { type: "string", format: "uuid" },
+                slug: { type: "string" },
+                name: { type: "string" },
+              },
+            },
             desc: { type: "string", nullable: true },
             isHighlight: { type: "boolean" },
             isPublished: { type: "boolean" },
@@ -270,6 +280,11 @@ const options = {
             title: { type: "string", minLength: 2, maxLength: 120 },
             img: { type: "string" },
             file: { type: "string" },
+            brandId: {
+              type: "string",
+              format: "uuid",
+              description: "Optional brand id (see GET /brands)",
+            },
             type: {
               type: "string",
               enum: ["home-brand", "small-pack", "general"],
@@ -280,6 +295,35 @@ const options = {
             desc: { type: "string" },
             isHighlight: { type: "boolean", default: false },
             isPublished: { type: "boolean", default: true },
+          },
+        },
+
+        // ─── Brand ──────────────────────────────────────────────────
+        Brand: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            slug: { type: "string", example: "bensdorp" },
+            name: { type: "string" },
+            description: { type: "string", nullable: true },
+            isActive: { type: "boolean" },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+          },
+        },
+        CreateBrandRequest: {
+          type: "object",
+          required: ["slug", "name"],
+          properties: {
+            slug: {
+              type: "string",
+              pattern: "^[a-z0-9-]+$",
+              minLength: 3,
+              maxLength: 64,
+            },
+            name: { type: "string", minLength: 2, maxLength: 120 },
+            description: { type: "string" },
+            isActive: { type: "boolean", default: true },
           },
         },
 

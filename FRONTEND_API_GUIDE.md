@@ -94,13 +94,31 @@ const { data: highlighted2 } = await apiFetch<Product[]>("/products/highlighted"
 const { data: product } = await apiFetch<Product>(`/products/${slug}`);
 
 // admin
-await apiFetch("/admin/products", { method:"POST", body: JSON.stringify({slug,cat,type,title,note,tag,img,file,desc,isHighlight}) });
+await apiFetch("/admin/products", { method:"POST", body: JSON.stringify({slug,categoryId,brandId,type,title,note,tag,img,file,desc,isHighlight}) });
 await apiFetch(`/admin/products/${slug}`, { method:"PUT", body: JSON.stringify({...product}) });
 await apiFetch(`/admin/products/${slug}/highlight`, { method:"PATCH", body: JSON.stringify({isHighlight:true}) });
 await apiFetch(`/admin/products/${slug}`, { method:"DELETE" });
 ```
 
 Model `Product` matches `backend.md:3.1` with `isHighlight` for `HighlightedProductsSection`. Keep `PAGE_SIZE = 8`.
+
+`brandId` is optional (nullable). Products return `brandId` plus an embedded `brand: {id,slug,name}`; filter with `/products?brandId=<uuid>`. Setting `brandId: null` on PUT clears the brand.
+
+### Brands (master data)
+
+```ts
+// public
+const { data: brands, meta } = await apiFetch<Brand[]>("/brands?isActive=true&q=&page=1&limit=10");
+const { data: brand } = await apiFetch<Brand>(`/brands/${slug}`);
+
+// admin
+await apiFetch("/admin/brands", { method:"POST", body: JSON.stringify({slug,name,description,isActive:true}) });
+await apiFetch(`/admin/brands/${slug}`, { method:"PUT", body: JSON.stringify({name,description}) });
+await apiFetch(`/admin/brands/${slug}/active`, { method:"PATCH", body: JSON.stringify({isActive:false}) });
+await apiFetch(`/admin/brands/${slug}`, { method:"DELETE" });
+```
+
+Deleting a brand clears `brandId` on its products (`ON DELETE SET NULL`).
 
 ## 4. Official Partners
 

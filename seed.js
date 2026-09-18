@@ -218,11 +218,34 @@ async function migrateProductCategories() {
   }
 }
 
+async function migrateProductColumns() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("products"))) return;
+
+  const table = await queryInterface.describeTable("products");
+
+  // sync() does not alter existing tables when DB_SYNC_ALTER=false
+  if (!table.file) {
+    await queryInterface.addColumn("products", "file", {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    });
+  }
+
+  if (!table.brand_id) {
+    await queryInterface.addColumn("products", "brand_id", {
+      type: DataTypes.UUID,
+      allowNull: true,
+    });
+  }
+}
+
 async function seed() {
   const syncOptions = process.env.DB_SYNC_ALTER === "false" ? {} : { alter: true };
   await sequelize.authenticate();
   await migratePartnerImages();
   await migrateProductCategories();
+  await migrateProductColumns();
   await sequelize.sync(syncOptions);
 
   if (process.env.DB_SYNC_ALTER !== "false") {
