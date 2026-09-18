@@ -426,6 +426,10 @@
  *         schema: { type: string, enum: [choco, matcha] }
  *         description: Filter by category (excludes "all")
  *       - in: query
+ *         name: brandId
+ *         schema: { type: string }
+ *         description: Filter by brand id. Comma-separated for multiple brands (e.g. "id1,id2").
+ *       - in: query
  *         name: type
  *         schema: { type: string, enum: [home-brand, small-pack, general] }
  *       - in: query

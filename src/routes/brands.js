@@ -17,6 +17,7 @@ function serialize(b) {
     slug: j.slug,
     name: j.name,
     description: j.description,
+    logo: j.logo ?? null,
     isActive: j.isActive ?? j.is_active ?? true,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
@@ -59,7 +60,7 @@ publicRouter.get("/:slug", async (req, res) => {
 // ADMIN: POST /admin/brands
 adminRouter.post("/", async (req, res) => {
   try {
-    const { slug, name, description, isActive } = req.body;
+    const { slug, name, description, logo, isActive } = req.body;
     const slugErr = validateSlug(slug);
     if (slugErr) return sendError(res, { code: "VALIDATION_ERROR", message: slugErr, status: 422, details: { slug: slugErr } });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
@@ -67,6 +68,7 @@ adminRouter.post("/", async (req, res) => {
       slug: slug.toLowerCase(),
       name,
       description,
+      logo: logo || null,
       isActive: isActive !== undefined ? !!isActive : true,
     });
     return sendSuccess(res, serialize(brand), null, 201);
@@ -86,7 +88,7 @@ adminRouter.put("/:slug", async (req, res) => {
   try {
     const brand = await Brand.findOne({ where: { slug: req.params.slug } });
     if (!brand) return sendError(res, { code: "NOT_FOUND", message: "Brand not found", status: 404 });
-    const { slug, name, description, isActive } = req.body;
+    const { slug, name, description, logo, isActive } = req.body;
     if (slug && slug !== brand.slug) {
       const err = validateSlug(slug);
       if (err) return sendError(res, { code: "VALIDATION_ERROR", message: err, status: 422 });
@@ -96,6 +98,7 @@ adminRouter.put("/:slug", async (req, res) => {
     }
     if (name !== undefined) brand.name = name;
     if (description !== undefined) brand.description = description;
+    if (logo !== undefined) brand.logo = logo || null;
     if (isActive !== undefined) brand.isActive = !!isActive;
     await brand.save();
     return sendSuccess(res, serialize(brand));

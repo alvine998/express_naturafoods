@@ -218,6 +218,19 @@ async function migrateProductCategories() {
   }
 }
 
+async function migrateBrandLogo() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("brands"))) return;
+
+  const table = await queryInterface.describeTable("brands");
+  if (!table.logo) {
+    await queryInterface.addColumn("brands", "logo", {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    });
+  }
+}
+
 async function migrateProductColumns() {
   const queryInterface = sequelize.getQueryInterface();
   if (!(await queryInterface.tableExists("products"))) return;
@@ -245,6 +258,7 @@ async function seed() {
   await sequelize.authenticate();
   await migratePartnerImages();
   await migrateProductCategories();
+  await migrateBrandLogo();
   await migrateProductColumns();
   await sequelize.sync(syncOptions);
 

@@ -43,7 +43,14 @@ publicRouter.get("/", async (req, res) => {
     const { page, limit, offset, sort } = parsePagination(req.query, { defaultLimit: 8, maxLimit: 50 });
     const where = {};
     if (req.query.categoryId) where.categoryId = req.query.categoryId;
-    if (req.query.brandId) where.brandId = req.query.brandId;
+    if (req.query.brandId) {
+      const brandIds = String(req.query.brandId)
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (brandIds.length === 1) where.brandId = brandIds[0];
+      else if (brandIds.length > 1) where.brandId = { [Op.in]: brandIds };
+    }
     if (req.query.type) where.type = req.query.type;
     if (req.query.isHighlight !== undefined) {
       const v = String(req.query.isHighlight).toLowerCase();

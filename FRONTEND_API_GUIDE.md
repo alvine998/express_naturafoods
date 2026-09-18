@@ -102,7 +102,7 @@ await apiFetch(`/admin/products/${slug}`, { method:"DELETE" });
 
 Model `Product` matches `backend.md:3.1` with `isHighlight` for `HighlightedProductsSection`. Keep `PAGE_SIZE = 8`.
 
-`brandId` is optional (nullable). Products return `brandId` plus an embedded `brand: {id,slug,name}`; filter with `/products?brandId=<uuid>`. Setting `brandId: null` on PUT clears the brand.
+`brandId` is optional (nullable). Products return `brandId` plus an embedded `brand: {id,slug,name}`; filter with `/products?brandId=<uuid>`, or comma-separate for several brands: `/products?brandId=<uuid1>,<uuid2>`. Setting `brandId: null` on PUT clears the brand.
 
 ### Brands (master data)
 
@@ -112,8 +112,8 @@ const { data: brands, meta } = await apiFetch<Brand[]>("/brands?isActive=true&q=
 const { data: brand } = await apiFetch<Brand>(`/brands/${slug}`);
 
 // admin
-await apiFetch("/admin/brands", { method:"POST", body: JSON.stringify({slug,name,description,isActive:true}) });
-await apiFetch(`/admin/brands/${slug}`, { method:"PUT", body: JSON.stringify({name,description}) });
+await apiFetch("/admin/brands", { method:"POST", body: JSON.stringify({slug,name,description,logo,isActive:true}) });
+await apiFetch(`/admin/brands/${slug}`, { method:"PUT", body: JSON.stringify({name,description,logo}) });
 await apiFetch(`/admin/brands/${slug}/active`, { method:"PATCH", body: JSON.stringify({isActive:false}) });
 await apiFetch(`/admin/brands/${slug}`, { method:"DELETE" });
 ```

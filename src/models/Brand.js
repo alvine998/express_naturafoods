@@ -27,6 +27,10 @@ const Brand = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    logo: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
