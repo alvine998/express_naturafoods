@@ -20,6 +20,7 @@ function serialize(p) {
     isPublished: j.isPublished ?? j.is_published ?? true,
     link: j.link,
     color: j.color,
+    brandIds: Array.isArray(j.brandIds ?? j.brand_ids) ? (j.brandIds ?? j.brand_ids) : [],
     order: j.order,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
@@ -60,13 +61,14 @@ publicRouter.get("/:id", async (req, res) => {
 // ADMIN
 adminRouter.post("/", async (req, res) => {
   try {
-    const { id, name, description, images, background, isPublished, link, color, order } = req.body;
+    const { id, name, description, images, background, isPublished, link, color, brandIds, order } = req.body;
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
     if (!Array.isArray(images) || images.length === 0 || images.some((image) => typeof image !== "string" || image.trim() === "")) {
       return sendError(res, { code: "VALIDATION_ERROR", message: "images must be a non-empty array of strings", status: 422 });
     }
     if (!background) return sendError(res, { code: "VALIDATION_ERROR", message: "background is required", status: 422 });
+    const normalizedBrandIds = Array.isArray(brandIds) ? [...new Set(brandIds.map((v) => String(v).trim()).filter(Boolean))] : [];
     const partner = await OfficialPartner.create({
       id: String(id).toLowerCase(),
       name,
@@ -76,6 +78,7 @@ adminRouter.post("/", async (req, res) => {
       isPublished: isPublished !== undefined ? !!isPublished : true,
       link,
       color,
+      brandIds: normalizedBrandIds.length ? normalizedBrandIds : null,
       order: order || 0,
     });
     return sendSuccess(res, serialize(partner), null, 201);
@@ -108,6 +111,10 @@ adminRouter.put("/:id", async (req, res) => {
     if (isPublished !== undefined) partner.isPublished = !!isPublished;
     if (link !== undefined) partner.link = link;
     if (color !== undefined) partner.color = color;
+    if (brandIds !== undefined) {
+      const normalizedBrandIds = Array.isArray(brandIds) ? [...new Set(brandIds.map((v) => String(v).trim()).filter(Boolean))] : [];
+      partner.brandIds = normalizedBrandIds.length ? normalizedBrandIds : null;
+    }
     if (order !== undefined) partner.order = order;
     await partner.save();
     return sendSuccess(res, serialize(partner));

@@ -76,6 +76,13 @@ ALTER TABLE `home_brands`
 --   WHERE EXISTS (SELECT 1 FROM `home_brand_brands` hbb WHERE hbb.`home_brand_id` = hb.`id`);
 DROP TABLE IF EXISTS `home_brand_brands`;
 
+-- 6. Official partner -> brands as a JSON array of brand ids
+ALTER TABLE `official_partners`
+  ADD COLUMN `brand_ids` json DEFAULT NULL AFTER `color`;
+
+ALTER TABLE `official_partners`
+  MODIFY COLUMN `brand_ids` json NULL DEFAULT NULL;
+
 -- Rollback (run manually, in this order)
 -- ALTER TABLE `home_brands` DROP COLUMN `brand_ids`;
 -- ALTER TABLE `products` DROP FOREIGN KEY `products_brand_id_foreign`;

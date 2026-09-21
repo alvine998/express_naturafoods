@@ -46,6 +46,11 @@ const OfficialPartner = sequelize.define(
       type: DataTypes.STRING(20),
       allowNull: true,
     },
+    brandIds: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      field: "brand_ids",
+    },
     order: {
       type: DataTypes.INTEGER,
       allowNull: false,
