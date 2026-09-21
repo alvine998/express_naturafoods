@@ -16,7 +16,7 @@ function serialize(h) {
     name: j.name,
     image: j.image,
     desc: j.desc,
-    brandIds: Array.isArray(j.brandIds) ? j.brandIds : [],
+    brandIds: Array.isArray(j.brandIds ?? j.brand_ids) ? (j.brandIds ?? j.brand_ids) : [],
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
