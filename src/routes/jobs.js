@@ -2,7 +2,8 @@ const express = require("express");
 const Job = require("../models/Job");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
-const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
+const { parsePagination, buildMeta, buildSearchWhere, defaultOrder } = require("../utils/pagination");
+const { resolveSortIndex } = require("../utils/validators");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -18,6 +19,8 @@ function serialize(j) {
     type: d.type,
     desc: d.desc,
     isPublished: d.isPublished ?? d.is_published ?? true,
+    sortIndex: d.sortIndex ?? d.sort_index ?? 0,
+    index: d.sortIndex ?? d.sort_index ?? 0,
     createdAt: d.createdAt || d.created_at,
     updatedAt: d.updatedAt || d.updated_at,
   };
@@ -31,7 +34,7 @@ publicRouter.get("/", async (req, res) => {
     if (req.query.loc) where.loc = req.query.loc;
     if (req.query.type) where.type = req.query.type;
     if (req.query.q) Object.assign(where, buildSearchWhere(req.query.q, ["title", "dept", "loc", "type"]));
-    const { count, rows } = await Job.findAndCountAll({ where, order: sort, limit, offset });
+    const { count, rows } = await Job.findAndCountAll({ where, order: defaultOrder(req, sort), limit, offset });
     return sendSuccess(res, rows.map(serialize), buildMeta(page, limit, count));
   } catch (err) {
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
@@ -53,7 +56,9 @@ adminRouter.post("/", async (req, res) => {
     const { id, title, dept, loc, type, desc, isPublished } = req.body;
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
     if (!title) return sendError(res, { code: "VALIDATION_ERROR", message: "title is required", status: 422 });
-    const job = await Job.create({ id, title, dept, loc, type, desc, isPublished });
+    const sortIndex = resolveSortIndex(req.body);
+    if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+    const job = await Job.create({ id, title, dept, loc, type, desc, isPublished, ...(sortIndex !== undefined ? { sortIndex } : {}) });
     return sendSuccess(res, serialize(job), null, 201);
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
@@ -70,9 +75,14 @@ adminRouter.put("/:id", async (req, res) => {
       if (exists) return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
       job.id = req.body.id;
     }
-    ["title", "dept", "loc", "type", "desc", "isPublished"].forEach((f) => {
+    ["title", "dept", "loc", "type", "desc", "isPublished", "sortIndex"].forEach((f) => {
       if (req.body[f] !== undefined) job[f] = req.body[f];
     });
+    if (req.body.index !== undefined && req.body.sortIndex === undefined) {
+      const v = resolveSortIndex(req.body);
+      if (v === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+      if (v !== undefined) job.sortIndex = v;
+    }
     await job.save();
     return sendSuccess(res, serialize(job));
   } catch (err) {

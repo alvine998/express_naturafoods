@@ -3,7 +3,8 @@ const { Op } = require("sequelize");
 const OfficialPartner = require("../models/OfficialPartner");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
-const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
+const { parsePagination, buildMeta, buildSearchWhere, defaultOrder } = require("../utils/pagination");
+const { resolveSortIndex } = require("../utils/validators");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -22,6 +23,8 @@ function serialize(p) {
     color: j.color,
     brandIds: Array.isArray(j.brandIds ?? j.brand_ids) ? (j.brandIds ?? j.brand_ids) : [],
     order: j.order,
+    sortIndex: j.order ?? 0,
+    index: j.order ?? 0,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -40,7 +43,7 @@ publicRouter.get("/", async (req, res) => {
       const search = buildSearchWhere(req.query.q, ["name", "id", "description"]);
       Object.assign(where, search);
     }
-    const order = req.query.sort ? sort : [["order", "ASC"], ["createdAt", "DESC"]];
+    const order = defaultOrder(req, sort, "order");
     const { count, rows } = await OfficialPartner.findAndCountAll({ where, order, limit, offset });
     return sendSuccess(res, rows.map(serialize), buildMeta(page, limit, count));
   } catch (err) {
@@ -79,7 +82,7 @@ adminRouter.post("/", async (req, res) => {
       link,
       color,
       brandIds: normalizedBrandIds.length ? normalizedBrandIds : null,
-      order: order || 0,
+      order: resolveSortIndex(req.body, ["order"]) ?? order ?? 0,
     });
     return sendSuccess(res, serialize(partner), null, 201);
   } catch (err) {
@@ -115,7 +118,12 @@ adminRouter.put("/:id", async (req, res) => {
       const normalizedBrandIds = Array.isArray(brandIds) ? [...new Set(brandIds.map((v) => String(v).trim()).filter(Boolean))] : [];
       partner.brandIds = normalizedBrandIds.length ? normalizedBrandIds : null;
     }
-    if (order !== undefined) partner.order = order;
+    {
+      const v = resolveSortIndex(req.body, ["order"]);
+      if (v === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+      if (v !== undefined) partner.order = v;
+      else if (order !== undefined) partner.order = order;
+    }
     await partner.save();
     return sendSuccess(res, serialize(partner));
   } catch (err) {

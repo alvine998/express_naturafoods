@@ -39,11 +39,17 @@ const Category = sequelize.define(
       defaultValue: false,
       field: "is_highlight",
     },
+    sortIndex: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: "sort_index",
+    },
   },
   {
     tableName: "categories",
     underscored: true,
-    indexes: [{ fields: ["slug"], unique: true }, { fields: ["is_active"] }, { fields: ["is_highlight"] }],
+    indexes: [{ fields: ["slug"], unique: true }, { fields: ["is_active"] }, { fields: ["is_highlight"] }, { fields: ["sort_index"] }],
   }
 );
 

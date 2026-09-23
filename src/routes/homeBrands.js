@@ -3,7 +3,8 @@ const HomeBrand = require("../models/HomeBrand");
 const Brand = require("../models/Brand");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
-const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
+const { parsePagination, buildMeta, buildSearchWhere, defaultOrder } = require("../utils/pagination");
+const { resolveSortIndex } = require("../utils/validators");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -17,6 +18,8 @@ function serialize(h) {
     image: j.image,
     desc: j.desc,
     brandIds: Array.isArray(j.brandIds ?? j.brand_ids) ? (j.brandIds ?? j.brand_ids) : [],
+    sortIndex: j.sortIndex ?? j.sort_index ?? 0,
+    index: j.sortIndex ?? j.sort_index ?? 0,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -41,7 +44,7 @@ publicRouter.get("/", async (req, res) => {
     const { page, limit, offset, sort } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
     const where = {};
     if (req.query.q) Object.assign(where, buildSearchWhere(req.query.q, ["name", "desc"]));
-    const { count, rows } = await HomeBrand.findAndCountAll({ where, order: sort, limit, offset });
+    const { count, rows } = await HomeBrand.findAndCountAll({ where, order: defaultOrder(req, sort), limit, offset });
     return sendSuccess(res, rows.map(serialize), buildMeta(page, limit, count));
   } catch (err) {
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
@@ -69,7 +72,9 @@ adminRouter.post("/", async (req, res) => {
     if (missing.length) {
       return sendError(res, { code: "VALIDATION_ERROR", message: "Brand not found", status: 422, details: { brandIds: missing } });
     }
-    const h = await HomeBrand.create({ id, name, image, desc, brandIds });
+    const sortIndex = resolveSortIndex(req.body);
+    if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+    const h = await HomeBrand.create({ id, name, image, desc, brandIds, ...(sortIndex !== undefined ? { sortIndex } : {}) });
     return sendSuccess(res, serialize(h), null, 201);
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
@@ -97,9 +102,14 @@ adminRouter.put("/:id", async (req, res) => {
       if (exists) return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
       h.id = req.body.id;
     }
-    ["name", "image", "desc"].forEach((f) => {
+    ["name", "image", "desc", "sortIndex"].forEach((f) => {
       if (req.body[f] !== undefined) h[f] = req.body[f];
     });
+    if (req.body.index !== undefined && req.body.sortIndex === undefined) {
+      const v = resolveSortIndex(req.body);
+      if (v === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+      if (v !== undefined) h.sortIndex = v;
+    }
     await h.save();
     return sendSuccess(res, serialize(h));
   } catch (err) {

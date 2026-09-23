@@ -25,10 +25,17 @@ const HomeBrand = sequelize.define(
       allowNull: true,
       field: "brand_ids",
     },
+    sortIndex: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: "sort_index",
+    },
   },
   {
     tableName: "home_brands",
     underscored: true,
+    indexes: [{ fields: ["sort_index"] }],
   }
 );
 

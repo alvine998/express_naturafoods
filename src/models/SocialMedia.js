@@ -34,10 +34,17 @@ const SocialMedia = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
     },
+    sortIndex: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: "sort_index",
+    },
   },
   {
     tableName: "social_media",
     underscored: true,
+    indexes: [{ fields: ["sort_index"] }],
   }
 );
 

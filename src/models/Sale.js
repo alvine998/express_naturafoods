@@ -43,11 +43,17 @@ const Sale = sequelize.define(
       defaultValue: true,
       field: "is_published",
     },
+    sortIndex: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: "sort_index",
+    },
   },
   {
     tableName: "sales",
     underscored: true,
-    indexes: [{ fields: ["is_published"] }, { fields: ["location"] }],
+    indexes: [{ fields: ["is_published"] }, { fields: ["location"] }, { fields: ["sort_index"] }],
   }
 );
 

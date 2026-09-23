@@ -2,7 +2,8 @@ const express = require("express");
 const Sale = require("../models/Sale");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
-const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
+const { parsePagination, buildMeta, buildSearchWhere, defaultOrder } = require("../utils/pagination");
+const { resolveSortIndex } = require("../utils/validators");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -29,6 +30,8 @@ function serialize(s) {
     location: j.location,
     isPublished,
     published: isPublished,
+    sortIndex: j.sortIndex ?? j.sort_index ?? 0,
+    index: j.sortIndex ?? j.sort_index ?? 0,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -49,7 +52,7 @@ publicRouter.get("/", async (req, res) => {
       if (v === "true" || v === "false") where.isPublished = v === "true";
     }
     if (req.query.q) Object.assign(where, buildSearchWhere(req.query.q, ["name", "position", "location", "email", "whatsapp"]));
-    const { count, rows } = await Sale.findAndCountAll({ where, order: sort, limit, offset });
+    const { count, rows } = await Sale.findAndCountAll({ where, order: defaultOrder(req, sort), limit, offset });
     return sendSuccess(res, rows.map(serialize), buildMeta(page, limit, count));
   } catch (err) {
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
@@ -72,6 +75,8 @@ adminRouter.post("/", async (req, res) => {
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
     const published = resolvePublished(req.body);
+    const sortIndex = resolveSortIndex(req.body);
+    if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
     const sale = await Sale.create({
       id,
       name,
@@ -82,6 +87,7 @@ adminRouter.post("/", async (req, res) => {
       photo,
       location,
       ...(published !== undefined ? { isPublished: published } : {}),
+      ...(sortIndex !== undefined ? { sortIndex } : {}),
     });
     return sendSuccess(res, serialize(sale), null, 201);
   } catch (err) {
@@ -100,11 +106,16 @@ adminRouter.put("/:id", async (req, res) => {
       if (exists) return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
       sale.id = req.body.id;
     }
-    ["name", "gender", "position", "whatsapp", "email", "photo", "location"].forEach((f) => {
+    ["name", "gender", "position", "whatsapp", "email", "photo", "location", "sortIndex"].forEach((f) => {
       if (req.body[f] !== undefined) sale[f] = req.body[f];
     });
     const published = resolvePublished(req.body);
     if (published !== undefined) sale.isPublished = published;
+    if (req.body.index !== undefined && req.body.sortIndex === undefined) {
+      const v = resolveSortIndex(req.body);
+      if (v === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+      if (v !== undefined) sale.sortIndex = v;
+    }
     await sale.save();
     return sendSuccess(res, serialize(sale));
   } catch (err) {

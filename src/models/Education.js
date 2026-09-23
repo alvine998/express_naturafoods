@@ -45,10 +45,17 @@ const Education = sequelize.define(
       defaultValue: true,
       field: "is_published",
     },
+    sortIndex: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: "sort_index",
+    },
   },
   {
     tableName: "educations",
     underscored: true,
+    indexes: [{ fields: ["sort_index"] }],
   }
 );
 

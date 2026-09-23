@@ -17,5 +17,22 @@ function validateRequired(value, field) {
   if (value === undefined || value === null || String(value).trim() === "") return `${field} is required`;
   return null;
 }
+// Returns undefined when absent, null when invalid, integer otherwise.
+// Accepts `sortIndex` with `index` alias so admin can send either.
+function parseSortIndex(value) {
+  if (value === undefined || value === null || value === "") return undefined;
+  const n = Number(value);
+  if (!Number.isInteger(n)) return null;
+  return n;
+}
 
-module.exports = { validateSlug, validateUsername, validateRequired, slugRegex, usernameRegex };
+// Pull sort value from body honoring sortIndex/index[/order] aliases.
+function resolveSortIndex(body, extraAliases = []) {
+  const keys = ["sortIndex", "index", ...extraAliases];
+  for (const k of keys) {
+    if (body[k] !== undefined) return parseSortIndex(body[k]);
+  }
+  return undefined;
+}
+
+module.exports = { validateSlug, validateUsername, validateRequired, parseSortIndex, resolveSortIndex, slugRegex, usernameRegex };

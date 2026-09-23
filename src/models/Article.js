@@ -59,9 +59,16 @@ const Article = sequelize.define(
       type: DataTypes.TEXT("long"),
       allowNull: false,
     },
+    sortIndex: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: "sort_index",
+    },
   },
   {
     underscored: true,
+    indexes: [{ fields: ["sort_index"] }],
   }
 );
 

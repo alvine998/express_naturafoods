@@ -2,7 +2,8 @@ const express = require("express");
 const Education = require("../models/Education");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
-const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
+const { parsePagination, buildMeta, buildSearchWhere, defaultOrder } = require("../utils/pagination");
+const { resolveSortIndex } = require("../utils/validators");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -21,6 +22,8 @@ function serialize(e) {
     cta: j.cta,
     link: j.link,
     isPublished: j.isPublished ?? j.is_published ?? true,
+    sortIndex: j.sortIndex ?? j.sort_index ?? 0,
+    index: j.sortIndex ?? j.sort_index ?? 0,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -32,7 +35,7 @@ publicRouter.get("/", async (req, res) => {
     const where = {};
     if (req.query.level) where.level = req.query.level;
     if (req.query.q) Object.assign(where, buildSearchWhere(req.query.q, ["title", "desc", "level"]));
-    const { count, rows } = await Education.findAndCountAll({ where, order: sort, limit, offset });
+    const { count, rows } = await Education.findAndCountAll({ where, order: defaultOrder(req, sort), limit, offset });
     return sendSuccess(res, rows.map(serialize), buildMeta(page, limit, count));
   } catch (err) {
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
@@ -54,7 +57,9 @@ adminRouter.post("/", async (req, res) => {
     const { id, title, desc, duration, level, img, eyebrow, cta, link, isPublished } = req.body;
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
     if (!title) return sendError(res, { code: "VALIDATION_ERROR", message: "title is required", status: 422 });
-    const edu = await Education.create({ id, title, desc, duration, level, img, eyebrow, cta, link, isPublished });
+    const sortIndex = resolveSortIndex(req.body);
+    if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+    const edu = await Education.create({ id, title, desc, duration, level, img, eyebrow, cta, link, isPublished, ...(sortIndex !== undefined ? { sortIndex } : {}) });
     return sendSuccess(res, serialize(edu), null, 201);
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
@@ -66,7 +71,7 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const edu = await Education.findByPk(req.params.id);
     if (!edu) return sendError(res, { code: "NOT_FOUND", message: "Education not found", status: 404 });
-    const fields = ["id", "title", "desc", "duration", "level", "img", "eyebrow", "cta", "link", "isPublished"];
+    const fields = ["id", "title", "desc", "duration", "level", "img", "eyebrow", "cta", "link", "isPublished", "sortIndex"];
     // handle id change
     if (req.body.id && req.body.id !== edu.id) {
       const exists = await Education.findByPk(req.body.id);
@@ -77,6 +82,11 @@ adminRouter.put("/:id", async (req, res) => {
       if (f === "id") return;
       if (req.body[f] !== undefined) edu[f] = req.body[f];
     });
+    if (req.body.index !== undefined && req.body.sortIndex === undefined) {
+      const v = resolveSortIndex(req.body);
+      if (v === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+      if (v !== undefined) edu.sortIndex = v;
+    }
     await edu.save();
     return sendSuccess(res, serialize(edu));
   } catch (err) {

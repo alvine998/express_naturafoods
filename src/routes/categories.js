@@ -3,8 +3,8 @@ const { Op } = require("sequelize");
 const Category = require("../models/Category");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
-const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
-const { validateSlug } = require("../utils/validators");
+const { parsePagination, buildMeta, buildSearchWhere, defaultOrder } = require("../utils/pagination");
+const { validateSlug, resolveSortIndex } = require("../utils/validators");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -19,6 +19,8 @@ function serialize(c) {
     description: j.description,
     isActive: j.isActive ?? j.is_active ?? true,
     isHighlight: j.isHighlight ?? j.is_highlight ?? false,
+    sortIndex: j.sortIndex ?? j.sort_index ?? 0,
+    index: j.sortIndex ?? j.sort_index ?? 0,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -41,7 +43,7 @@ publicRouter.get("/", async (req, res) => {
       const search = buildSearchWhere(req.query.q, ["name", "slug"]);
       Object.assign(where, search);
     }
-    const { count, rows } = await Category.findAndCountAll({ where, order: sort, limit, offset });
+    const { count, rows } = await Category.findAndCountAll({ where, order: defaultOrder(req, sort), limit, offset });
     const data = rows.map(serialize);
     const meta = buildMeta(page, limit, count);
     return sendSuccess(res, data, meta);
@@ -68,12 +70,15 @@ adminRouter.post("/", async (req, res) => {
     const slugErr = validateSlug(slug);
     if (slugErr) return sendError(res, { code: "VALIDATION_ERROR", message: slugErr, status: 422, details: { slug: slugErr } });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
+    const sortIndex = resolveSortIndex(req.body);
+    if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
     const category = await Category.create({
       slug: slug.toLowerCase(),
       name,
       description,
       isActive: isActive !== undefined ? !!isActive : true,
       isHighlight: isHighlight !== undefined ? !!isHighlight : false,
+      ...(sortIndex !== undefined ? { sortIndex } : {}),
     });
     return sendSuccess(res, serialize(category), null, 201);
   } catch (err) {
@@ -104,6 +109,12 @@ adminRouter.put("/:slug", async (req, res) => {
     if (description !== undefined) category.description = description;
     if (isActive !== undefined) category.isActive = !!isActive;
     if (isHighlight !== undefined) category.isHighlight = !!isHighlight;
+    if (req.body.sortIndex !== undefined) category.sortIndex = req.body.sortIndex;
+    if (req.body.index !== undefined && req.body.sortIndex === undefined) {
+      const v = resolveSortIndex(req.body);
+      if (v === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+      if (v !== undefined) category.sortIndex = v;
+    }
     await category.save();
     return sendSuccess(res, serialize(category));
   } catch (err) {

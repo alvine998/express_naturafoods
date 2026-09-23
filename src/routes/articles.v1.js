@@ -3,7 +3,8 @@ const { Op } = require("sequelize");
 const Article = require("../models/Article");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
-const { parsePagination, buildMeta } = require("../utils/pagination");
+const { parsePagination, buildMeta, defaultOrder } = require("../utils/pagination");
+const { resolveSortIndex } = require("../utils/validators");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -36,6 +37,8 @@ function serialize(a) {
     contentZh: j.contentZN,
     thumbnail: j.thumbnail,
     img: j.thumbnail,
+    sortIndex: j.sortIndex ?? j.sort_index ?? 0,
+    index: j.sortIndex ?? j.sort_index ?? 0,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -71,6 +74,11 @@ function mapContractToDb(body, isCreate = false) {
   else if (body.contentZh !== undefined) data.contentZN = body.contentZh;
   // fallback content -> contentEN
   if (body.content !== undefined && !data.contentEN) data.contentEN = body.content;
+  {
+    const v = resolveSortIndex(body);
+    if (v === null) throw Object.assign(new Error("sortIndex must be an integer"), { status: 422, code: "VALIDATION_ERROR" });
+    if (v !== undefined) data.sortIndex = v;
+  }
   if (isCreate) {
     // ensure required fields
     if (!data.titleID) data.titleID = data.titleEN || "Untitled ID";
@@ -120,7 +128,8 @@ publicRouter.get("/", async (req, res) => {
       }
     }
     // handle sort param: backend.md default sort=date:desc or createdAt:desc -> map date to published_date
-    let order = sort;
+    // default (no sort): admin-adjustable sortIndex, then recency
+    let order = defaultOrder(req, sort);
     if (req.query.sort) {
       const s = String(req.query.sort);
       if (s.startsWith("date")) {
@@ -158,6 +167,9 @@ publicRouter.get("/:slug", async (req, res) => {
     if (!article) return sendError(res, { code: "NOT_FOUND", message: "Article not found", status: 404 });
     return sendSuccess(res, serialize(article));
   } catch (err) {
+    if (err.code === "VALIDATION_ERROR") return sendError(res, { code: err.code, message: err.message, status: err.status || 422 });
+    if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "Slug already exists", status: 409 });
+    if (err.name === "SequelizeValidationError") return sendError(res, { code: "VALIDATION_ERROR", message: err.message, status: 422 });
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
   }
 });
@@ -171,7 +183,7 @@ adminRouter.post("/", async (req, res) => {
     const article = await Article.create(data);
     return sendSuccess(res, serialize(article), null, 201);
   } catch (err) {
-    if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "Slug already exists", status: 409 });
+    if (err.code === "VALIDATION_ERROR") return sendError(res, { code: err.code, message: err.message, status: err.status || 422 });
     if (err.name === "SequelizeValidationError") return sendError(res, { code: "VALIDATION_ERROR", message: err.message, status: 422 });
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
   }
@@ -193,6 +205,7 @@ adminRouter.put("/:slug", async (req, res) => {
     await article.save();
     return sendSuccess(res, serialize(article));
   } catch (err) {
+    if (err.code === "VALIDATION_ERROR") return sendError(res, { code: err.code, message: err.message, status: err.status || 422 });
     if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "Slug already exists", status: 409 });
     return sendError(res, { code: "INTERNAL_ERROR", message: err.message, status: 500 });
   }

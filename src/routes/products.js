@@ -5,8 +5,8 @@ const Category = require("../models/Category");
 const Brand = require("../models/Brand");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
-const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
-const { validateSlug } = require("../utils/validators");
+const { parsePagination, buildMeta, buildSearchWhere, defaultOrder } = require("../utils/pagination");
+const { validateSlug, resolveSortIndex } = require("../utils/validators");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -32,6 +32,8 @@ function serialize(p) {
     desc: j.desc,
     isHighlight: j.isHighlight ?? j.is_highlight ?? false,
     isPublished: j.isPublished ?? j.is_published ?? true,
+    sortIndex: j.sortIndex ?? j.sort_index ?? 0,
+    index: j.sortIndex ?? j.sort_index ?? 0,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -68,7 +70,7 @@ publicRouter.get("/", async (req, res) => {
     const { count, rows } = await Product.findAndCountAll({
       where,
       include: [{ model: Category, as: "category" }, { model: Brand, as: "brand" }],
-      order: sort,
+      order: defaultOrder(req, sort),
       limit,
       offset,
     });
@@ -89,7 +91,7 @@ publicRouter.get("/highlighted", async (req, res) => {
     const { count, rows } = await Product.findAndCountAll({
       where,
       include: [{ model: Category, as: "category" }, { model: Brand, as: "brand" }],
-      order: sort,
+      order: defaultOrder(req, sort),
       limit,
       offset,
     });
@@ -119,6 +121,8 @@ publicRouter.get("/:slug", async (req, res) => {
 adminRouter.post("/", async (req, res) => {
   try {
     const { slug, categoryId, brandId, type, title, note, tag, img, file, desc, isHighlight, isPublished } = req.body;
+    const sortIndex = resolveSortIndex(req.body);
+    if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
     const slugErr = validateSlug(slug);
     if (slugErr) return sendError(res, { code: "VALIDATION_ERROR", message: slugErr, status: 422, details: { slug: slugErr } });
     if (!categoryId) return sendError(res, { code: "VALIDATION_ERROR", message: "categoryId is required", status: 422 });
@@ -143,6 +147,7 @@ adminRouter.post("/", async (req, res) => {
       desc,
       isHighlight: !!isHighlight,
       isPublished: isPublished !== undefined ? !!isPublished : true,
+      ...(sortIndex !== undefined ? { sortIndex } : {}),
     });
     const created = await Product.findByPk(product.id, { include: [{ model: Category, as: "category" }, { model: Brand, as: "brand" }] });
     return sendSuccess(res, serialize(created), null, 201);
@@ -162,7 +167,7 @@ adminRouter.put("/:slug", async (req, res) => {
   try {
     const product = await Product.findOne({ where: { slug: req.params.slug } });
     if (!product) return sendError(res, { code: "NOT_FOUND", message: "Product not found", status: 404 });
-    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc, isHighlight, isPublished } = req.body;
+    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc, isHighlight, isPublished, sortIndex } = req.body;
     if (slug && slug !== product.slug) {
       const err = validateSlug(slug);
       if (err) return sendError(res, { code: "VALIDATION_ERROR", message: err, status: 422 });
@@ -193,6 +198,12 @@ adminRouter.put("/:slug", async (req, res) => {
     if (desc !== undefined) product.desc = desc;
     if (isHighlight !== undefined) product.isHighlight = !!isHighlight;
     if (isPublished !== undefined) product.isPublished = !!isPublished;
+    if (sortIndex !== undefined) product.sortIndex = sortIndex;
+    if (req.body.index !== undefined && sortIndex === undefined) {
+      const v = resolveSortIndex(req.body);
+      if (v === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+      if (v !== undefined) product.sortIndex = v;
+    }
     await product.save();
     const updated = await Product.findByPk(product.id, { include: [{ model: Category, as: "category" }, { model: Brand, as: "brand" }] });
     return sendSuccess(res, serialize(updated));

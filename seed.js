@@ -279,6 +279,33 @@ async function migrateProductColumns() {
   }
 }
 
+async function migrateSortIndexColumns() {
+  const queryInterface = sequelize.getQueryInterface();
+  const tables = [
+    "products",
+    "categories",
+    "brands",
+    "articles",
+    "educations",
+    "innovations",
+    "jobs",
+    "sales",
+    "social_media",
+    "home_brands",
+  ];
+  for (const tableName of tables) {
+    if (!(await queryInterface.tableExists(tableName))) continue;
+    const table = await queryInterface.describeTable(tableName);
+    if (!table.sort_index) {
+      await queryInterface.addColumn(tableName, "sort_index", {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      });
+    }
+  }
+}
+
 async function seed() {
   const syncOptions = process.env.DB_SYNC_ALTER === "false" ? {} : { alter: true };
   await sequelize.authenticate();
@@ -288,6 +315,7 @@ async function seed() {
   await migrateHomeBrandColumns();
   await migrateOfficialPartnerBrandIds();
   await migrateProductColumns();
+  await migrateSortIndexColumns();
   await sequelize.sync(syncOptions);
 
   if (process.env.DB_SYNC_ALTER !== "false") {

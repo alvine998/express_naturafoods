@@ -37,11 +37,17 @@ const Brand = sequelize.define(
       defaultValue: true,
       field: "is_active",
     },
+    sortIndex: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: "sort_index",
+    },
   },
   {
     tableName: "brands",
     underscored: true,
-    indexes: [{ fields: ["slug"], unique: true }, { fields: ["is_active"] }],
+    indexes: [{ fields: ["slug"], unique: true }, { fields: ["is_active"] }, { fields: ["sort_index"] }],
   }
 );
 

@@ -78,11 +78,17 @@ const Product = sequelize.define(
       defaultValue: true,
       field: "is_published",
     },
+    sortIndex: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: "sort_index",
+    },
   },
   {
     tableName: "products",
     underscored: true,
-    indexes: [{ fields: ["is_highlight"] }, { fields: ["type"] }, { fields: ["category_id"] }, { fields: ["brand_id"] }],
+    indexes: [{ fields: ["is_highlight"] }, { fields: ["type"] }, { fields: ["category_id"] }, { fields: ["brand_id"] }, { fields: ["sort_index"] }],
   }
 );
 

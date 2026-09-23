@@ -5,8 +5,8 @@ const Product = require("../models/Product");
 const HomeBrand = require("../models/HomeBrand");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
-const { parsePagination, buildMeta, buildSearchWhere } = require("../utils/pagination");
-const { validateSlug } = require("../utils/validators");
+const { parsePagination, buildMeta, buildSearchWhere, defaultOrder } = require("../utils/pagination");
+const { validateSlug, resolveSortIndex } = require("../utils/validators");
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -21,6 +21,8 @@ function serialize(b) {
     description: j.description,
     logo: j.logo ?? null,
     isActive: j.isActive ?? j.is_active ?? true,
+    sortIndex: j.sortIndex ?? j.sort_index ?? 0,
+    index: j.sortIndex ?? j.sort_index ?? 0,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -39,7 +41,7 @@ publicRouter.get("/", async (req, res) => {
       const search = buildSearchWhere(req.query.q, ["name", "slug"]);
       Object.assign(where, search);
     }
-    const { count, rows } = await Brand.findAndCountAll({ where, order: sort, limit, offset });
+    const { count, rows } = await Brand.findAndCountAll({ where, order: defaultOrder(req, sort), limit, offset });
     const data = rows.map(serialize);
     const meta = buildMeta(page, limit, count);
     return sendSuccess(res, data, meta);
@@ -66,12 +68,15 @@ adminRouter.post("/", async (req, res) => {
     const slugErr = validateSlug(slug);
     if (slugErr) return sendError(res, { code: "VALIDATION_ERROR", message: slugErr, status: 422, details: { slug: slugErr } });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
+    const sortIndex = resolveSortIndex(req.body);
+    if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
     const brand = await Brand.create({
       slug: slug.toLowerCase(),
       name,
       description,
       logo: logo || null,
       isActive: isActive !== undefined ? !!isActive : true,
+      ...(sortIndex !== undefined ? { sortIndex } : {}),
     });
     return sendSuccess(res, serialize(brand), null, 201);
   } catch (err) {
@@ -102,6 +107,12 @@ adminRouter.put("/:slug", async (req, res) => {
     if (description !== undefined) brand.description = description;
     if (logo !== undefined) brand.logo = logo || null;
     if (isActive !== undefined) brand.isActive = !!isActive;
+    if (req.body.sortIndex !== undefined) brand.sortIndex = req.body.sortIndex;
+    if (req.body.index !== undefined && req.body.sortIndex === undefined) {
+      const v = resolveSortIndex(req.body);
+      if (v === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
+      if (v !== undefined) brand.sortIndex = v;
+    }
     await brand.save();
     return sendSuccess(res, serialize(brand));
   } catch (err) {

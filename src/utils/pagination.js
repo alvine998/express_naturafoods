@@ -11,10 +11,12 @@ function parsePagination(query, opts = {}) {
   const offset = (page - 1) * limit;
 
   // sort: "createdAt:desc" or "field:asc,other:desc" – we support single "field:dir"
+  // `index` is an alias for `sortIndex` (admin-adjustable landing order).
   let sort = null;
   if (query.sort) {
     const parts = String(query.sort).split(":"); // e.g. "createdAt:desc"
-    const field = parts[0];
+    let field = parts[0];
+    if (field === "index") field = "sortIndex";
     const dir = (parts[1] || "desc").toUpperCase();
     const allowedDirs = ["ASC", "DESC"];
     if (field) {
@@ -24,6 +26,13 @@ function parsePagination(query, opts = {}) {
   if (!sort) sort = [["createdAt", "DESC"]];
 
   return { page, limit, offset, sort };
+}
+
+// Default list order: admin-adjustable sortIndex first, then recency.
+// Pass sortCol="order" for models that keep the legacy `order` column.
+function defaultOrder(req, sort, sortCol = "sortIndex", tiebreak = ["createdAt", "DESC"]) {
+  if (req.query.sort) return sort;
+  return [[sortCol, "ASC"], tiebreak];
 }
 
 function buildMeta(page, limit, total) {
@@ -45,4 +54,4 @@ function buildSearchWhere(q, fields) {
   };
 }
 
-module.exports = { parsePagination, buildMeta, buildSearchWhere };
+module.exports = { parsePagination, buildMeta, buildSearchWhere, defaultOrder };
