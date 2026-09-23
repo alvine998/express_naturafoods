@@ -93,7 +93,7 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const partner = await OfficialPartner.findByPk(req.params.id);
     if (!partner) return sendError(res, { code: "NOT_FOUND", message: "Official partner not found", status: 404 });
-    const { id, name, description, images, background, isPublished, link, color, order } = req.body;
+    const { id, name, description, images, background, isPublished, link, color, brandIds, order } = req.body;
     if (id && id !== partner.id) {
       const exists = await OfficialPartner.findByPk(id);
       if (exists) return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
