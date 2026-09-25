@@ -14,6 +14,7 @@ const Sale = require("./Sale");
 const Inquiry = require("./Inquiry");
 const SiteContent = require("./SiteContent");
 const { AssistantConfig } = require("./AssistantConfig");
+const { CompanySetting } = require("./CompanySetting");
 const HomeBrand = require("./HomeBrand");
 const SocialMedia = require("./SocialMedia");
 const TokenBlacklist = require("./TokenBlacklist");
@@ -45,6 +46,7 @@ module.exports = {
   Inquiry,
   SiteContent,
   AssistantConfig,
+  CompanySetting,
   HomeBrand,
   SocialMedia,
   TokenBlacklist,

@@ -27,6 +27,8 @@
  *     description: Per-locale site content overrides
  *   - name: Assistant
  *     description: AI assistant config and chat
+ *   - name: Company Settings
+ *     description: Company profile (logo, name, vision, mission, contact, socials)
  *   - name: Uploads
  *     description: File upload (R2 / local disk)
  *   - name: Stats
@@ -2055,6 +2057,118 @@
  *                       $ref: '#/components/schemas/ChatResponse'
  *       422:
  *         description: Missing message
+ */
+
+// ─── COMPANY SETTINGS ──────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /company-settings:
+ *   get:
+ *     tags: [Company Settings]
+ *     summary: Get company settings (public)
+ *     description: Returns the singleton company profile. Creates a default row if none exists.
+ *     responses:
+ *       200:
+ *         description: Company settings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/CompanySetting'
+ */
+
+/**
+ * @swagger
+ * /company-settings/{id}:
+ *   get:
+ *     tags: [Company Settings]
+ *     summary: Get company settings by id (public)
+ *     description: Only the singleton id `default` exists.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, example: default }
+ *     responses:
+ *       200:
+ *         description: Company settings
+ *       404:
+ *         description: Not found
+ */
+
+/**
+ * @swagger
+ * /admin/company-settings:
+ *   get:
+ *     tags: [Company Settings]
+ *     summary: Get company settings (admin)
+ *     responses:
+ *       200:
+ *         description: Company settings
+ *
+ *   post:
+ *     tags: [Company Settings]
+ *     summary: Create company settings (admin)
+ *     description: Creates the singleton `default` row. Returns 409 if it already exists.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateCompanySettingRequest'
+ *     responses:
+ *       201:
+ *         description: Created
+ *       409:
+ *         description: Company setting already exists
+ *
+ *   put:
+ *     tags: [Company Settings]
+ *     summary: Update company settings (admin)
+ *     description: Upserts the singleton row with the provided fields.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateCompanySettingRequest'
+ *     responses:
+ *       200:
+ *         description: Updated
+ *
+ *   patch:
+ *     tags: [Company Settings]
+ *     summary: Partial update company settings (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateCompanySettingRequest'
+ *     responses:
+ *       200:
+ *         description: Updated
+ *
+ *   delete:
+ *     tags: [Company Settings]
+ *     summary: Delete/reset company settings (admin)
+ *     description: Deletes the singleton row; the next GET recreates defaults.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       204:
+ *         description: Deleted
  */
 
 // ─── UPLOADS ───────────────────────────────────────────────────────
