@@ -17,6 +17,7 @@ const { AssistantConfig } = require("./AssistantConfig");
 const { CompanySetting } = require("./CompanySetting");
 const HomeBrand = require("./HomeBrand");
 const SocialMedia = require("./SocialMedia");
+const PromoBanner = require("./PromoBanner");
 const TokenBlacklist = require("./TokenBlacklist");
 const Otp = require("./Otp");
 const LoginAttempt = require("./LoginAttempt");
@@ -49,6 +50,7 @@ module.exports = {
   CompanySetting,
   HomeBrand,
   SocialMedia,
+  PromoBanner,
   TokenBlacklist,
   Otp,
   LoginAttempt,

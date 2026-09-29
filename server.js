@@ -76,6 +76,10 @@ const {
   publicRouter: companySettingsPublicRouter,
   adminRouter: companySettingsAdminRouter,
 } = require("./src/routes/companySettings");
+const {
+  publicRouter: promoBannersPublicRouter,
+  adminRouter: promoBannersAdminRouter,
+} = require("./src/routes/promoBanners");
 const usersAdminRouter = require("./src/routes/usersAdmin");
 const uploadsRouter = require("./src/routes/uploads");
 const statsRouter = require("./src/routes/stats");
@@ -143,6 +147,7 @@ app.use("/api/v1/categories", categoriesPublicRouter);
 app.use("/api/v1/brands", brandsPublicRouter);
 app.use("/api/v1/social-media", socialMediaPublicRouter);
 app.use("/api/v1/company-settings", companySettingsPublicRouter);
+app.use("/api/v1/promo-banners", promoBannersPublicRouter);
 app.use("/api/v1/official-partners", partnersPublicRouter);
 app.use("/api/v1/education", educationPublicRouter);
 app.use("/api/v1/innovations", innovationsPublicRouter);
@@ -160,6 +165,7 @@ app.use("/api/v1/admin/categories", categoriesAdminRouter);
 app.use("/api/v1/admin/brands", brandsAdminRouter);
 app.use("/api/v1/admin/social-media", socialMediaAdminRouter);
 app.use("/api/v1/admin/company-settings", companySettingsAdminRouter);
+app.use("/api/v1/admin/promo-banners", promoBannersAdminRouter);
 app.use("/api/v1/admin/official-partners", partnersAdminRouter);
 app.use("/api/v1/admin/education", educationAdminRouter);
 app.use("/api/v1/admin/innovations", innovationsAdminRouter);

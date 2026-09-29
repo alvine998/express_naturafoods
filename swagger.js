@@ -688,6 +688,37 @@ const options = {
           },
         },
 
+        PromoBanner: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            name: { type: "string" },
+            description: { type: "string", nullable: true },
+            status: { type: "string", enum: ["active", "inactive"] },
+            image: { type: "string", description: "Uploaded image URL" },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+          },
+        },
+        CreatePromoBannerRequest: {
+          type: "object",
+          required: ["name", "image"],
+          properties: {
+            name: { type: "string", maxLength: 150 },
+            description: { type: "string", nullable: true },
+            status: { type: "string", enum: ["active", "inactive"], default: "active" },
+            image: { type: "string", description: "URL returned by the upload endpoint" },
+          },
+        },
+        UpdatePromoBannerRequest: {
+          type: "object",
+          properties: {
+            name: { type: "string", maxLength: 150 },
+            description: { type: "string", nullable: true },
+            status: { type: "string", enum: ["active", "inactive"] },
+            image: { type: "string", description: "URL returned by the upload endpoint" },
+          },
+        },
         CompanySetting: {
           type: "object",
           properties: {

@@ -29,6 +29,8 @@
  *     description: AI assistant config and chat
  *   - name: Company Settings
  *     description: Company profile (logo, name, vision, mission, contact, socials)
+ *   - name: Promo Banners
+ *     description: Promotional banner content and images
  *   - name: Uploads
  *     description: File upload (R2 / local disk)
  *   - name: Stats
@@ -2057,6 +2059,186 @@
  *                       $ref: '#/components/schemas/ChatResponse'
  *       422:
  *         description: Missing message
+ */
+
+// ─── PROMO BANNERS ──────────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /promo-banners:
+ *   get:
+ *     tags: [Promo Banners]
+ *     summary: List active promo banners (public)
+ *     description: Returns only active banners. Images are uploaded separately using the admin upload endpoint.
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10, maximum: 50 }
+ *       - in: query
+ *         name: sort
+ *         schema: { type: string }
+ *         description: "Sort format: createdAt:desc"
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: Search across name and description
+ *     responses:
+ *       200:
+ *         description: Paginated active promo banners
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessEnvelope'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/PromoBanner'
+ *                     meta:
+ *                       $ref: '#/components/schemas/PaginationMeta'
+ */
+
+/**
+ * @swagger
+ * /promo-banners/{id}:
+ *   get:
+ *     tags: [Promo Banners]
+ *     summary: Get active promo banner by ID (public)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Promo banner details
+ *       404:
+ *         description: Promo banner not found or inactive
+ */
+
+/**
+ * @swagger
+ * /admin/promo-banners:
+ *   get:
+ *     tags: [Promo Banners]
+ *     summary: List promo banners (admin)
+ *     description: Returns active and inactive banners; optionally filter by status.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10, maximum: 50 }
+ *       - in: query
+ *         name: sort
+ *         schema: { type: string }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [active, inactive] }
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         description: Search across name and description
+ *     responses:
+ *       200:
+ *         description: Paginated promo banners
+ *       401:
+ *         description: Unauthorized
+ *
+ *   post:
+ *     tags: [Promo Banners]
+ *     summary: Create promo banner (admin)
+ *     description: Provide the image URL returned by POST /admin/uploads.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreatePromoBannerRequest'
+ *     responses:
+ *       201:
+ *         description: Promo banner created
+ *       401:
+ *         description: Unauthorized
+ *       422:
+ *         description: Missing name/image or invalid status
+ */
+
+/**
+ * @swagger
+ * /admin/promo-banners/{id}:
+ *   get:
+ *     tags: [Promo Banners]
+ *     summary: Get promo banner by ID (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Promo banner details
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Promo banner not found
+ *
+ *   put:
+ *     tags: [Promo Banners]
+ *     summary: Update promo banner (admin)
+ *     description: Updates only the provided fields.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdatePromoBannerRequest'
+ *     responses:
+ *       200:
+ *         description: Promo banner updated
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Promo banner not found
+ *       422:
+ *         description: Invalid field or status
+ *
+ *   delete:
+ *     tags: [Promo Banners]
+ *     summary: Delete promo banner (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       204:
+ *         description: Promo banner deleted
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Promo banner not found
  */
 
 // ─── COMPANY SETTINGS ──────────────────────────────────────────────
