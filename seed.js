@@ -279,6 +279,31 @@ async function migrateProductColumns() {
   }
 }
 
+async function migrateCompanySettingsVisiMisi() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("company_settings"))) return;
+
+  const table = await queryInterface.describeTable("company_settings");
+  const columns = {
+    visi_background: DataTypes.STRING(500),
+    visi_person_photo: DataTypes.STRING(500),
+    visi_person_name: DataTypes.STRING(200),
+    visi_person_position: DataTypes.STRING(200),
+    misi_background: DataTypes.STRING(500),
+    misi_person_photo: DataTypes.STRING(500),
+    misi_person_name: DataTypes.STRING(200),
+    misi_person_position: DataTypes.STRING(200),
+  };
+  for (const [column, type] of Object.entries(columns)) {
+    if (!table[column]) {
+      await queryInterface.addColumn("company_settings", column, {
+        type,
+        allowNull: true,
+      });
+    }
+  }
+}
+
 async function migrateSortIndexColumns() {
   const queryInterface = sequelize.getQueryInterface();
   const tables = [
@@ -316,6 +341,7 @@ async function seed() {
   await migrateOfficialPartnerBrandIds();
   await migrateProductColumns();
   await migrateSortIndexColumns();
+  await migrateCompanySettingsVisiMisi();
   await sequelize.sync(syncOptions);
 
   if (process.env.DB_SYNC_ALTER !== "false") {

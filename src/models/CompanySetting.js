@@ -7,6 +7,14 @@ const DEFAULT_COMPANY_SETTING = {
   description: null,
   visi: null,
   misi: null,
+  visiBackground: null,
+  visiPersonPhoto: null,
+  visiPersonName: null,
+  visiPersonPosition: null,
+  misiBackground: null,
+  misiPersonPhoto: null,
+  misiPersonName: null,
+  misiPersonPosition: null,
   tagline: null,
   email: null,
   phone: null,
@@ -47,6 +55,46 @@ const CompanySetting = sequelize.define(
     misi: {
       type: DataTypes.TEXT("medium"),
       allowNull: true,
+    },
+    visiBackground: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      field: "visi_background",
+    },
+    visiPersonPhoto: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      field: "visi_person_photo",
+    },
+    visiPersonName: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+      field: "visi_person_name",
+    },
+    visiPersonPosition: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+      field: "visi_person_position",
+    },
+    misiBackground: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      field: "misi_background",
+    },
+    misiPersonPhoto: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      field: "misi_person_photo",
+    },
+    misiPersonName: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+      field: "misi_person_name",
+    },
+    misiPersonPosition: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+      field: "misi_person_position",
     },
     tagline: {
       type: DataTypes.STRING(300),
