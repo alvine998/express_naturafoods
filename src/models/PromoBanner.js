@@ -28,6 +28,10 @@ const PromoBanner = sequelize.define(
       allowNull: false,
       validate: { notEmpty: true },
     },
+    url: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
   },
   {
     tableName: "promo_banners",

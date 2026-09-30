@@ -18,6 +18,7 @@ function serialize(banner) {
     description: j.description ?? null,
     status: j.status,
     image: j.image,
+    url: j.url ?? null,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
   };
@@ -84,7 +85,7 @@ adminRouter.get("/:id", async (req, res) => {
 
 adminRouter.post("/", async (req, res) => {
   try {
-    const { name, description, image, status } = req.body;
+    const { name, description, image, url, status } = req.body;
     if (typeof name !== "string" || !name.trim()) {
       return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
     }
@@ -98,6 +99,7 @@ adminRouter.post("/", async (req, res) => {
       name: name.trim(),
       description: description ?? null,
       image: image.trim(),
+      url: typeof url === "string" && url.trim() ? url.trim() : null,
       status: status || "active",
     });
     return sendSuccess(res, serialize(banner), null, 201);
@@ -113,7 +115,7 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const banner = await PromoBanner.findByPk(req.params.id);
     if (!banner) return sendError(res, { code: "NOT_FOUND", message: "Promo banner not found", status: 404 });
-    const { name, description, image, status } = req.body;
+    const { name, description, image, url, status } = req.body;
     if (name !== undefined) {
       if (typeof name !== "string" || !name.trim()) {
         return sendError(res, { code: "VALIDATION_ERROR", message: "name must not be empty", status: 422 });
@@ -126,6 +128,12 @@ adminRouter.put("/:id", async (req, res) => {
         return sendError(res, { code: "VALIDATION_ERROR", message: "image must not be empty", status: 422 });
       }
       banner.image = image.trim();
+    }
+    if (url !== undefined) {
+      if (url !== null && typeof url !== "string") {
+        return sendError(res, { code: "VALIDATION_ERROR", message: "url must be a string or null", status: 422 });
+      }
+      banner.url = typeof url === "string" && url.trim() ? url.trim() : null;
     }
     if (status !== undefined) {
       if (invalidStatus(status)) {

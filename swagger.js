@@ -696,6 +696,7 @@ const options = {
             description: { type: "string", nullable: true },
             status: { type: "string", enum: ["active", "inactive"] },
             image: { type: "string", description: "Uploaded image URL" },
+            url: { type: "string", nullable: true, description: "Optional link target when the banner is clicked" },
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" },
           },
@@ -708,6 +709,7 @@ const options = {
             description: { type: "string", nullable: true },
             status: { type: "string", enum: ["active", "inactive"], default: "active" },
             image: { type: "string", description: "URL returned by the upload endpoint" },
+            url: { type: "string", nullable: true, maxLength: 500, description: "Optional link target when the banner is clicked" },
           },
         },
         UpdatePromoBannerRequest: {
@@ -717,6 +719,7 @@ const options = {
             description: { type: "string", nullable: true },
             status: { type: "string", enum: ["active", "inactive"] },
             image: { type: "string", description: "URL returned by the upload endpoint" },
+            url: { type: "string", nullable: true, maxLength: 500, description: "Optional link target when the banner is clicked" },
           },
         },
         CompanySetting: {
