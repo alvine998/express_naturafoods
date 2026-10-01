@@ -331,6 +331,19 @@ async function migrateSortIndexColumns() {
   }
 }
 
+async function migrateArticleKeywords() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("articles"))) return;
+  const table = await queryInterface.describeTable("articles");
+  if (!table.keywords) {
+    await queryInterface.addColumn("articles", "keywords", {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+    });
+  }
+}
+
 async function seed() {
   const syncOptions = process.env.DB_SYNC_ALTER === "false" ? {} : { alter: true };
   await sequelize.authenticate();
@@ -342,6 +355,7 @@ async function seed() {
   await migrateProductColumns();
   await migrateSortIndexColumns();
   await migrateCompanySettingsVisiMisi();
+  await migrateArticleKeywords();
   await sequelize.sync(syncOptions);
 
   if (process.env.DB_SYNC_ALTER !== "false") {

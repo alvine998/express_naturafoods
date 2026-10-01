@@ -142,12 +142,14 @@ await apiFetch(`/admin/official-partners/${id}`, { method:"DELETE" });
 `Article` includes multilingual WYSIWYG. Backend stores HTML as-is.
 
 ```ts
-const { data, meta } = await apiFetch<Article[]>(`/articles?q=&category=&page=1&limit=10&sort=date:desc`);
+const { data, meta } = await apiFetch<Article[]>(`/articles?q=&category=&keywords=&page=1&limit=10&sort=date:desc`); // q searches slug, titles, category, excerpt, keywords
 const { data: article } = await apiFetch<Article>(`/articles/${slug}`);
-await apiFetch("/admin/articles", { method:"POST", body: JSON.stringify({slug,title: "Tempering Guide", category, excerpt, thumbnail: img, contentID:"<p>ID</p>", contentEN:"<p>EN</p>", contentZN:"<p>ZH</p>", status:"published"}) });
+await apiFetch("/admin/articles", { method:"POST", body: JSON.stringify({slug,title: "Tempering Guide", category, excerpt, keywords: "chocolate, tempering, baking", thumbnail: img, contentID:"<p>ID</p>", contentEN:"<p>EN</p>", contentZN:"<p>ZH</p>", status:"published"}) });
 await apiFetch(`/admin/articles/${slug}`, { method:"PUT", body: JSON.stringify({...}) });
 await apiFetch(`/admin/articles/${slug}`, { method:"DELETE" });
 ```
+
+`keywords` is an optional SEO string (max 255 chars, comma-separated, e.g. `"chocolate, tempering, baking"`). Admin POST/PUT also accept `string[]` (joined with `", "`). Filter with `?keywords=chocolate`; `?q=` also searches `keywords`.
 
 The API returns both legacy and contract shapes for compatibility:
 `{ slug, title, titleEN, titleID, titleZN, contentEN/contentEn, img/thumbnail, date/published_date, isPublished/status, ... }`

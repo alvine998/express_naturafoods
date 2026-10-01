@@ -223,6 +223,7 @@ type Article = {
   slug: string;      // unique, e.g. "tempering-guide"
   title: string;     // required
   excerpt: string;   // 0-300
+  keywords: string;  // SEO keywords, comma-separated, 0-255 chars, e.g. "chocolate, tempering, baking". Accepts string or string[] (joined with ", "). Searchable via `q` and filterable via `?keywords=`.
   content: string;   // deprecated fallback (EN)
   contentId: string; // ID locale HTML
   contentEn: string; // EN locale HTML
@@ -237,10 +238,10 @@ type Article = {
 ```
 
 ### 4.2 Endpoints
-- `GET /articles?q=&category=&page=&limit=&sort=date:desc`
+- `GET /articles?q=&category=&keywords=&page=&limit=&sort=date:desc` (`q` searches `slug, titleID/EN/ZN, category, excerpt, keywords`; `keywords` filters `keywords LIKE %...%`)
 - `GET /articles/:slug`
-- `POST /admin/articles` Body full Article (without id). `slug, title` required.
-- `PUT /admin/articles/:slug`
+- `POST /admin/articles` Body full Article (without id). `slug, title` required. `keywords` optional string/array, max 255 chars.
+- `PUT /admin/articles/:slug` (`keywords` same validation; `null`/empty clears it)
 - `DELETE /admin/articles/:slug`
 - `PATCH /admin/articles/:slug/publish` `{isPublished}` (if needed).
 

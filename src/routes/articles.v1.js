@@ -44,6 +44,23 @@ function serialize(a) {
   };
 }
 
+function normalizeKeywords(value) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  let normalized;
+  if (Array.isArray(value)) {
+    normalized = value.map((v) => String(v).trim()).filter(Boolean).join(", ");
+  } else if (typeof value === "string") {
+    normalized = value.trim();
+  } else {
+    throw Object.assign(new Error("keywords must be a string or an array of strings"), { status: 422, code: "VALIDATION_ERROR" });
+  }
+  if (normalized.length > 255) {
+    throw Object.assign(new Error("keywords must be at most 255 characters"), { status: 422, code: "VALIDATION_ERROR" });
+  }
+  return normalized;
+}
+
 function mapContractToDb(body, isCreate = false) {
   const data = {};
   // slug
@@ -59,7 +76,7 @@ function mapContractToDb(body, isCreate = false) {
   if (body.titleZN !== undefined) data.titleZN = body.titleZN;
   if (body.category !== undefined) data.category = body.category;
   if (body.excerpt !== undefined) data.excerpt = body.excerpt;
-  if (body.keywords !== undefined) data.keywords = body.keywords;
+  if (body.keywords !== undefined) data.keywords = normalizeKeywords(body.keywords);
   if (body.status !== undefined) data.status = body.status;
   else if (body.isPublished !== undefined) data.status = body.isPublished ? "published" : "draft";
   if (body.published_date !== undefined) data.published_date = body.published_date;
@@ -99,6 +116,7 @@ publicRouter.get("/", async (req, res) => {
     const where = {};
     if (req.query.category) where.category = req.query.category;
     if (req.query.status) where.status = req.query.status;
+    if (req.query.keywords) where.keywords = { [Op.like]: `%${req.query.keywords}%` };
     // contract also may send isPublished? map
     if (req.query.isPublished !== undefined) {
       const v = String(req.query.isPublished).toLowerCase();
@@ -114,6 +132,7 @@ publicRouter.get("/", async (req, res) => {
         { titleZN: { [Op.like]: like } },
         { category: { [Op.like]: like } },
         { excerpt: { [Op.like]: like } },
+        { keywords: { [Op.like]: like } },
       ];
       // if we set Op.or alongside other where, need to handle correctly: Sequelize where with Op.or at top level mixes with other fields => need Op.and
       // Simplest: if there is other where, wrap

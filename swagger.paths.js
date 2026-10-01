@@ -659,6 +659,10 @@
  *         name: category
  *         schema: { type: string }
  *       - in: query
+ *         name: keywords
+ *         schema: { type: string }
+ *         description: Filter by keywords (LIKE match, e.g. "chocolate")
+ *       - in: query
  *         name: status
  *         schema: { type: string, enum: [draft, published] }
  *       - in: query
@@ -667,7 +671,7 @@
  *       - in: query
  *         name: q
  *         schema: { type: string }
- *         description: Search across slug, titleID, titleEN, titleZN, category, excerpt
+ *         description: Search across slug, titleID, titleEN, titleZN, category, excerpt, keywords
  *     responses:
  *       200:
  *         description: Paginated article list
