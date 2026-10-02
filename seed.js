@@ -304,6 +304,19 @@ async function migrateCompanySettingsVisiMisi() {
   }
 }
 
+async function migrateCompanySettingsCareerBanner() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("company_settings"))) return;
+
+  const table = await queryInterface.describeTable("company_settings");
+  if (!table.career_banner) {
+    await queryInterface.addColumn("company_settings", "career_banner", {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    });
+  }
+}
+
 async function migrateSortIndexColumns() {
   const queryInterface = sequelize.getQueryInterface();
   const tables = [
@@ -355,6 +368,7 @@ async function seed() {
   await migrateProductColumns();
   await migrateSortIndexColumns();
   await migrateCompanySettingsVisiMisi();
+  await migrateCompanySettingsCareerBanner();
   await migrateArticleKeywords();
   await sequelize.sync(syncOptions);
 
