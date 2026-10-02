@@ -309,11 +309,17 @@ async function migrateCompanySettingsCareerBanner() {
   if (!(await queryInterface.tableExists("company_settings"))) return;
 
   const table = await queryInterface.describeTable("company_settings");
-  if (!table.career_banner) {
-    await queryInterface.addColumn("company_settings", "career_banner", {
-      type: DataTypes.STRING(500),
-      allowNull: true,
-    });
+  const columns = {
+    career_banner: DataTypes.STRING(500),
+    career_url: DataTypes.STRING(500),
+  };
+  for (const [column, type] of Object.entries(columns)) {
+    if (!table[column]) {
+      await queryInterface.addColumn("company_settings", column, {
+        type,
+        allowNull: true,
+      });
+    }
   }
 }
 

@@ -16,6 +16,7 @@ const DEFAULT_COMPANY_SETTING = {
   misiPersonName: null,
   misiPersonPosition: null,
   careerBanner: null,
+  careerUrl: null,
   tagline: null,
   email: null,
   phone: null,
@@ -101,6 +102,11 @@ const CompanySetting = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
       field: "career_banner",
+    },
+    careerUrl: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      field: "career_url",
     },
     tagline: {
       type: DataTypes.STRING(300),
