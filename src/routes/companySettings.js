@@ -12,8 +12,12 @@ const FIELDS = [
   "name",
   "logo",
   "description",
-  "visi",
-  "misi",
+  "visi_id",
+  "visi_en",
+  "visi_zn",
+  "misi_id",
+  "misi_en",
+  "misi_zn",
   "visiBackground",
   "visiPersonPhoto",
   "visiPersonName",
@@ -36,15 +40,10 @@ const FIELDS = [
   "youtube",
   "mapsUrl",
 ];
-const ALIASES = { vision: "visi", mission: "misi" };
-
 function extract(body = {}) {
   const out = {};
   for (const field of FIELDS) {
     if (body[field] !== undefined) out[field] = body[field];
-  }
-  for (const [alias, target] of Object.entries(ALIASES)) {
-    if (body[alias] !== undefined && out[target] === undefined) out[target] = body[alias];
   }
   for (const key of Object.keys(out)) {
     if (typeof out[key] === "string") {
@@ -63,10 +62,12 @@ function serialize(setting) {
     name: j.name,
     logo: j.logo ?? null,
     description: j.description ?? null,
-    visi: j.visi ?? null,
-    misi: j.misi ?? null,
-    vision: j.visi ?? null,
-    mission: j.misi ?? null,
+    visi_id: j.visi_id ?? null,
+    visi_en: j.visi_en ?? null,
+    visi_zn: j.visi_zn ?? null,
+    misi_id: j.misi_id ?? null,
+    misi_en: j.misi_en ?? null,
+    misi_zn: j.misi_zn ?? null,
     visiBackground: j.visiBackground ?? j.visi_background ?? null,
     visiPersonPhoto: j.visiPersonPhoto ?? j.visi_person_photo ?? null,
     visiPersonName: j.visiPersonName ?? j.visi_person_name ?? null,

@@ -5,8 +5,12 @@ const DEFAULT_COMPANY_SETTING = {
   name: "PT Natura Inti Sukses",
   logo: null,
   description: null,
-  visi: null,
-  misi: null,
+  visi_id: null,
+  visi_en: null,
+  visi_zn: null,
+  misi_id: null,
+  misi_en: null,
+  misi_zn: null,
   visiBackground: null,
   visiPersonPhoto: null,
   visiPersonName: null,
@@ -50,11 +54,27 @@ const CompanySetting = sequelize.define(
       type: DataTypes.TEXT("medium"),
       allowNull: true,
     },
-    visi: {
+    visi_id: {
       type: DataTypes.TEXT("medium"),
       allowNull: true,
     },
-    misi: {
+    visi_en: {
+      type: DataTypes.TEXT("medium"),
+      allowNull: true,
+    },
+    visi_zn: {
+      type: DataTypes.TEXT("medium"),
+      allowNull: true,
+    },
+    misi_id: {
+      type: DataTypes.TEXT("medium"),
+      allowNull: true,
+    },
+    misi_en: {
+      type: DataTypes.TEXT("medium"),
+      allowNull: true,
+    },
+    misi_zn: {
       type: DataTypes.TEXT("medium"),
       allowNull: true,
     },

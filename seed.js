@@ -285,6 +285,12 @@ async function migrateCompanySettingsVisiMisi() {
 
   const table = await queryInterface.describeTable("company_settings");
   const columns = {
+    visi_id: DataTypes.TEXT("medium"),
+    visi_en: DataTypes.TEXT("medium"),
+    visi_zn: DataTypes.TEXT("medium"),
+    misi_id: DataTypes.TEXT("medium"),
+    misi_en: DataTypes.TEXT("medium"),
+    misi_zn: DataTypes.TEXT("medium"),
     visi_background: DataTypes.STRING(500),
     visi_person_photo: DataTypes.STRING(500),
     visi_person_name: DataTypes.STRING(200),
@@ -301,6 +307,17 @@ async function migrateCompanySettingsVisiMisi() {
         allowNull: true,
       });
     }
+  }
+
+  if (table.visi) {
+    await sequelize.query(
+      "UPDATE company_settings SET visi_id = visi WHERE visi_id IS NULL AND visi IS NOT NULL"
+    );
+  }
+  if (table.misi) {
+    await sequelize.query(
+      "UPDATE company_settings SET misi_id = misi WHERE misi_id IS NULL AND misi IS NOT NULL"
+    );
   }
 }
 
