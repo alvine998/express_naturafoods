@@ -1,5 +1,4 @@
 const express = require("express");
-const { Op } = require("sequelize");
 const SocialMedia = require("../models/SocialMedia");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
@@ -15,7 +14,9 @@ function serialize(s) {
   return {
     id: j.id,
     name: j.name,
-    description: j.description,
+    description_id: j.description_id ?? null,
+    description_en: j.description_en ?? null,
+    description_zn: j.description_zn ?? null,
     image: j.image,
     instagram: j.instagram,
     facebook: j.facebook,
@@ -33,7 +34,7 @@ publicRouter.get("/", async (req, res) => {
     const { page, limit, offset, sort } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
     const where = {};
     if (req.query.q) {
-      const search = buildSearchWhere(req.query.q, ["name", "description"]);
+      const search = buildSearchWhere(req.query.q, ["name", "description_id", "description_en", "description_zn"]);
       Object.assign(where, search);
     }
     const { count, rows } = await SocialMedia.findAndCountAll({ where, order: defaultOrder(req, sort), limit, offset });
@@ -56,11 +57,11 @@ publicRouter.get("/:id", async (req, res) => {
 // ADMIN: POST /admin/social-media
 adminRouter.post("/", async (req, res) => {
   try {
-    const { name, description, image, instagram, facebook, tiktok } = req.body;
+    const { name, description_id, description_en, description_zn, image, instagram, facebook, tiktok } = req.body;
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
     const sortIndex = resolveSortIndex(req.body);
     if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
-    const social = await SocialMedia.create({ name, description, image, instagram, facebook, tiktok, ...(sortIndex !== undefined ? { sortIndex } : {}) });
+    const social = await SocialMedia.create({ name, description_id, description_en, description_zn, image, instagram, facebook, tiktok, ...(sortIndex !== undefined ? { sortIndex } : {}) });
     return sendSuccess(res, serialize(social), null, 201);
   } catch (err) {
     if (err.name === "SequelizeValidationError") return sendError(res, { code: "VALIDATION_ERROR", message: err.message, status: 422 });
@@ -73,9 +74,11 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const social = await SocialMedia.findByPk(req.params.id);
     if (!social) return sendError(res, { code: "NOT_FOUND", message: "Social media not found", status: 404 });
-    const { name, description, image, instagram, facebook, tiktok } = req.body;
+    const { name, description_id, description_en, description_zn, image, instagram, facebook, tiktok } = req.body;
     if (name !== undefined) social.name = name;
-    if (description !== undefined) social.description = description;
+    if (description_id !== undefined) social.description_id = description_id;
+    if (description_en !== undefined) social.description_en = description_en;
+    if (description_zn !== undefined) social.description_zn = description_zn;
     if (image !== undefined) social.image = image;
     if (instagram !== undefined) social.instagram = instagram;
     if (facebook !== undefined) social.facebook = facebook;

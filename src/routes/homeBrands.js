@@ -16,7 +16,9 @@ function serialize(h) {
     id: j.id,
     name: j.name,
     image: j.image,
-    desc: j.desc,
+    desc_id: j.desc_id ?? null,
+    desc_en: j.desc_en ?? null,
+    desc_zn: j.desc_zn ?? null,
     brandIds: Array.isArray(j.brandIds ?? j.brand_ids) ? (j.brandIds ?? j.brand_ids) : [],
     sortIndex: j.sortIndex ?? j.sort_index ?? 0,
     index: j.sortIndex ?? j.sort_index ?? 0,
@@ -43,7 +45,7 @@ publicRouter.get("/", async (req, res) => {
   try {
     const { page, limit, offset, sort } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
     const where = {};
-    if (req.query.q) Object.assign(where, buildSearchWhere(req.query.q, ["name", "desc"]));
+    if (req.query.q) Object.assign(where, buildSearchWhere(req.query.q, ["name", "desc_id", "desc_en", "desc_zn"]));
     const { count, rows } = await HomeBrand.findAndCountAll({ where, order: defaultOrder(req, sort), limit, offset });
     return sendSuccess(res, rows.map(serialize), buildMeta(page, limit, count));
   } catch (err) {
@@ -63,7 +65,7 @@ publicRouter.get("/:id", async (req, res) => {
 
 adminRouter.post("/", async (req, res) => {
   try {
-    const { id, name, image, desc } = req.body;
+    const { id, name, image, desc_id, desc_en, desc_zn } = req.body;
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
     const brandIds = normalizeBrandIds(req.body.brandIds);
@@ -74,7 +76,7 @@ adminRouter.post("/", async (req, res) => {
     }
     const sortIndex = resolveSortIndex(req.body);
     if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
-    const h = await HomeBrand.create({ id, name, image, desc, brandIds, ...(sortIndex !== undefined ? { sortIndex } : {}) });
+    const h = await HomeBrand.create({ id, name, image, desc_id, desc_en, desc_zn, brandIds, ...(sortIndex !== undefined ? { sortIndex } : {}) });
     return sendSuccess(res, serialize(h), null, 201);
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
@@ -102,7 +104,7 @@ adminRouter.put("/:id", async (req, res) => {
       if (exists) return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
       h.id = req.body.id;
     }
-    ["name", "image", "desc", "sortIndex"].forEach((f) => {
+    ["name", "image", "desc_id", "desc_en", "desc_zn", "sortIndex"].forEach((f) => {
       if (req.body[f] !== undefined) h[f] = req.body[f];
     });
     if (req.body.index !== undefined && req.body.sortIndex === undefined) {

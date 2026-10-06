@@ -62,7 +62,15 @@ const Product = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
     },
-    desc: {
+    desc_id: {
+      type: DataTypes.TEXT("medium"),
+      allowNull: true,
+    },
+    desc_en: {
+      type: DataTypes.TEXT("medium"),
+      allowNull: true,
+    },
+    desc_zn: {
       type: DataTypes.TEXT("medium"),
       allowNull: true,
     },

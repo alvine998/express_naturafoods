@@ -244,6 +244,74 @@ async function migrateHomeBrandColumns() {
   }
 }
 
+async function migrateTranslatedDescriptions() {
+  const queryInterface = sequelize.getQueryInterface();
+  for (const tableName of ["home_brands", "products"]) {
+    if (!(await queryInterface.tableExists(tableName))) continue;
+
+    const table = await queryInterface.describeTable(tableName);
+    for (const column of ["desc_id", "desc_en", "desc_zn"]) {
+      if (!table[column]) {
+        await queryInterface.addColumn(tableName, column, {
+          type: DataTypes.TEXT("medium"),
+          allowNull: true,
+        });
+      }
+    }
+    if (table.desc) await queryInterface.removeColumn(tableName, "desc");
+  }
+}
+
+async function migratePartnerAndSocialDescriptions() {
+  const queryInterface = sequelize.getQueryInterface();
+  const tables = {
+    official_partners: DataTypes.TEXT("medium"),
+    social_media: DataTypes.TEXT,
+  };
+  for (const [tableName, type] of Object.entries(tables)) {
+    if (!(await queryInterface.tableExists(tableName))) continue;
+    const table = await queryInterface.describeTable(tableName);
+    for (const column of ["description_id", "description_en", "description_zn"]) {
+      if (!table[column]) {
+        await queryInterface.addColumn(tableName, column, {
+          type,
+          allowNull: true,
+        });
+      }
+    }
+    if (table.description) await queryInterface.removeColumn(tableName, "description");
+  }
+}
+
+async function migrateSaleTranslationsAndGender() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("sales"))) return;
+
+  let table = await queryInterface.describeTable("sales");
+  for (const column of ["position_id", "position_en", "position_zn", "location_id", "location_en", "location_zn"]) {
+    if (!table[column]) {
+      await queryInterface.addColumn("sales", column, {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      });
+    }
+  }
+
+  if (table.gender) {
+    await sequelize.query("UPDATE sales SET gender = CASE WHEN LOWER(gender) IN ('f', 'female') THEN 'f' ELSE 'm' END");
+    await queryInterface.changeColumn("sales", "gender", {
+      type: DataTypes.ENUM("m", "f"),
+      allowNull: false,
+      defaultValue: "m",
+    });
+  }
+
+  table = await queryInterface.describeTable("sales");
+  for (const column of ["position", "location"]) {
+    if (table[column]) await queryInterface.removeColumn("sales", column);
+  }
+}
+
 async function migrateOfficialPartnerBrandIds() {
   const queryInterface = sequelize.getQueryInterface();
   if (!(await queryInterface.tableExists("official_partners"))) return;
@@ -387,6 +455,9 @@ async function seed() {
   await migrateProductCategories();
   await migrateBrandLogo();
   await migrateHomeBrandColumns();
+  await migrateTranslatedDescriptions();
+  await migratePartnerAndSocialDescriptions();
+  await migrateSaleTranslationsAndGender();
   await migrateOfficialPartnerBrandIds();
   await migrateProductColumns();
   await migrateSortIndexColumns();

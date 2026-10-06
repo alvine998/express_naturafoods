@@ -13,7 +13,15 @@ const OfficialPartner = sequelize.define(
       type: DataTypes.STRING(120),
       allowNull: false,
     },
-    description: {
+    description_id: {
+      type: DataTypes.TEXT("medium"),
+      allowNull: true,
+    },
+    description_en: {
+      type: DataTypes.TEXT("medium"),
+      allowNull: true,
+    },
+    description_zn: {
       type: DataTypes.TEXT("medium"),
       allowNull: true,
     },

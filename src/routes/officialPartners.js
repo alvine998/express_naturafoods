@@ -1,5 +1,4 @@
 const express = require("express");
-const { Op } = require("sequelize");
 const OfficialPartner = require("../models/OfficialPartner");
 const publicGetAuth = require("../middleware/publicGetAuth");
 const { sendSuccess, sendError } = require("../utils/envelope");
@@ -15,7 +14,9 @@ function serialize(p) {
   return {
     id: j.id,
     name: j.name,
-    description: j.description,
+    description_id: j.description_id ?? null,
+    description_en: j.description_en ?? null,
+    description_zn: j.description_zn ?? null,
     images: j.images,
     background: j.background,
     isPublished: j.isPublished ?? j.is_published ?? true,
@@ -40,7 +41,7 @@ publicRouter.get("/", async (req, res) => {
       if (v === "true" || v === "false") where.isPublished = v === "true";
     }
     if (req.query.q) {
-      const search = buildSearchWhere(req.query.q, ["name", "id", "description"]);
+      const search = buildSearchWhere(req.query.q, ["name", "id", "description_id", "description_en", "description_zn"]);
       Object.assign(where, search);
     }
     const order = defaultOrder(req, sort, "order");
@@ -64,7 +65,7 @@ publicRouter.get("/:id", async (req, res) => {
 // ADMIN
 adminRouter.post("/", async (req, res) => {
   try {
-    const { id, name, description, images, background, isPublished, link, color, brandIds, order } = req.body;
+    const { id, name, description_id, description_en, description_zn, images, background, isPublished, link, color, brandIds, order } = req.body;
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
     if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
     if (!Array.isArray(images) || images.length === 0 || images.some((image) => typeof image !== "string" || image.trim() === "")) {
@@ -75,7 +76,9 @@ adminRouter.post("/", async (req, res) => {
     const partner = await OfficialPartner.create({
       id: String(id).toLowerCase(),
       name,
-      description,
+      description_id,
+      description_en,
+      description_zn,
       images,
       background,
       isPublished: isPublished !== undefined ? !!isPublished : true,
@@ -96,14 +99,16 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const partner = await OfficialPartner.findByPk(req.params.id);
     if (!partner) return sendError(res, { code: "NOT_FOUND", message: "Official partner not found", status: 404 });
-    const { id, name, description, images, background, isPublished, link, color, brandIds, order } = req.body;
+    const { id, name, description_id, description_en, description_zn, images, background, isPublished, link, color, brandIds, order } = req.body;
     if (id && id !== partner.id) {
       const exists = await OfficialPartner.findByPk(id);
       if (exists) return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
       partner.id = String(id).toLowerCase();
     }
     if (name !== undefined) partner.name = name;
-    if (description !== undefined) partner.description = description;
+    if (description_id !== undefined) partner.description_id = description_id;
+    if (description_en !== undefined) partner.description_en = description_en;
+    if (description_zn !== undefined) partner.description_zn = description_zn;
     if (images !== undefined) {
       if (!Array.isArray(images) || images.length === 0 || images.some((image) => typeof image !== "string" || image.trim() === "")) {
         return sendError(res, { code: "VALIDATION_ERROR", message: "images must be a non-empty array of strings", status: 422 });

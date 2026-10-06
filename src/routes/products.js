@@ -29,7 +29,9 @@ function serialize(p) {
     tag: j.tag,
     img: j.img,
     file: j.file,
-    desc: j.desc,
+    desc_id: j.desc_id ?? null,
+    desc_en: j.desc_en ?? null,
+    desc_zn: j.desc_zn ?? null,
     isHighlight: j.isHighlight ?? j.is_highlight ?? false,
     isPublished: j.isPublished ?? j.is_published ?? true,
     sortIndex: j.sortIndex ?? j.sort_index ?? 0,
@@ -63,7 +65,7 @@ publicRouter.get("/", async (req, res) => {
       if (v === "true" || v === "false") where.isPublished = v === "true";
     }
     if (req.query.q) {
-      const search = buildSearchWhere(req.query.q, ["title", "slug", "tag", "type"]);
+      const search = buildSearchWhere(req.query.q, ["title", "slug", "tag", "type", "desc_id", "desc_en", "desc_zn"]);
       Object.assign(where, search);
     }
 
@@ -120,7 +122,7 @@ publicRouter.get("/:slug", async (req, res) => {
 // ADMIN: POST /admin/products
 adminRouter.post("/", async (req, res) => {
   try {
-    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc, isHighlight, isPublished } = req.body;
+    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc_id, desc_en, desc_zn, isHighlight, isPublished } = req.body;
     const sortIndex = resolveSortIndex(req.body);
     if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
     const slugErr = validateSlug(slug);
@@ -144,7 +146,9 @@ adminRouter.post("/", async (req, res) => {
       tag,
       img,
       file: file || null,
-      desc,
+      desc_id,
+      desc_en,
+      desc_zn,
       isHighlight: !!isHighlight,
       isPublished: isPublished !== undefined ? !!isPublished : true,
       ...(sortIndex !== undefined ? { sortIndex } : {}),
@@ -167,7 +171,7 @@ adminRouter.put("/:slug", async (req, res) => {
   try {
     const product = await Product.findOne({ where: { slug: req.params.slug } });
     if (!product) return sendError(res, { code: "NOT_FOUND", message: "Product not found", status: 404 });
-    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc, isHighlight, isPublished, sortIndex } = req.body;
+    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc_id, desc_en, desc_zn, isHighlight, isPublished, sortIndex } = req.body;
     if (slug && slug !== product.slug) {
       const err = validateSlug(slug);
       if (err) return sendError(res, { code: "VALIDATION_ERROR", message: err, status: 422 });
@@ -195,7 +199,9 @@ adminRouter.put("/:slug", async (req, res) => {
     if (tag !== undefined) product.tag = tag;
     if (img !== undefined) product.img = img;
     if (file !== undefined) product.file = file || null;
-    if (desc !== undefined) product.desc = desc;
+    if (desc_id !== undefined) product.desc_id = desc_id;
+    if (desc_en !== undefined) product.desc_en = desc_en;
+    if (desc_zn !== undefined) product.desc_zn = desc_zn;
     if (isHighlight !== undefined) product.isHighlight = !!isHighlight;
     if (isPublished !== undefined) product.isPublished = !!isPublished;
     if (sortIndex !== undefined) product.sortIndex = sortIndex;

@@ -14,7 +14,15 @@ const SocialMedia = sequelize.define(
       allowNull: false,
       validate: { len: [2, 120] },
     },
-    description: {
+    description_id: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    description_en: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    description_zn: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
