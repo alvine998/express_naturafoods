@@ -164,17 +164,23 @@ await apiFetch("/education?q=&level=&page=&limit=10");
 await apiFetch("/education/barista-matcha");
 
 // Admin
-await apiFetch("/admin/education", { method:"POST", body: JSON.stringify({id,title,desc,duration,level,img,eyebrow,cta,link}) });
+await apiFetch("/admin/education", { method:"POST", body: JSON.stringify({id,title,desc,duration,level,img_id,img_en,img_zn,eyebrow,cta,link}) });
 
 // Innovation
 await apiFetch("/innovations");
-await apiFetch("/admin/innovations", { method:"POST", body: JSON.stringify({id,title,desc,tag,img,eyebrow,link,cta}) });
+await apiFetch("/admin/innovations", { method:"POST", body: JSON.stringify({id,title,desc,tag,img_id,img_en,img_zn,eyebrow,link,cta}) });
 
 // Jobs
 await apiFetch("/jobs?q=&dept=&loc=&type=&page=&limit=10");
 await apiFetch("/jobs/sales-jkt");
 
 // Admin similar PUT/DELETE at /admin/jobs/${id}
+```
+
+Education and innovation image fields are `img_id`, `img_en`, and `img_zn`; promo banners use `image_id`, `image_en`, and `image_zn`. Legacy `img`/`image` fields remain available as compatibility aliases, and existing values are migrated to English.
+
+```ts
+await apiFetch("/admin/promo-banners", { method:"POST", body: JSON.stringify({name,image_id,image_en,image_zn,status,url}) });
 ```
 
 ## 7. Inquiries (Leads)

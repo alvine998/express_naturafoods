@@ -17,7 +17,10 @@ function serialize(banner) {
     name: j.name,
     description: j.description ?? null,
     status: j.status,
-    image: j.image,
+    image: [j.image_en, j.image_id, j.image_zn, j.image].find((value) => typeof value === "string" && value.trim()) ?? null,
+    image_id: j.image_id ?? null,
+    image_en: j.image_en ?? null,
+    image_zn: j.image_zn ?? null,
     url: j.url ?? null,
     createdAt: j.createdAt || j.created_at,
     updatedAt: j.updatedAt || j.updated_at,
@@ -85,12 +88,13 @@ adminRouter.get("/:id", async (req, res) => {
 
 adminRouter.post("/", async (req, res) => {
   try {
-    const { name, description, image, url, status } = req.body;
+    const { name, description, image, image_id, image_en, image_zn, url, status } = req.body;
     if (typeof name !== "string" || !name.trim()) {
       return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
     }
-    if (typeof image !== "string" || !image.trim()) {
-      return sendError(res, { code: "VALIDATION_ERROR", message: "image is required", status: 422 });
+    const localizedImage = [image_en, image_id, image_zn, image].find((value) => typeof value === "string" && value.trim());
+    if (typeof localizedImage !== "string" || !localizedImage.trim()) {
+      return sendError(res, { code: "VALIDATION_ERROR", message: "at least one of image_id, image_en, or image_zn is required", status: 422 });
     }
     if (invalidStatus(status)) {
       return sendError(res, { code: "VALIDATION_ERROR", message: "status must be active or inactive", status: 422 });
@@ -98,7 +102,10 @@ adminRouter.post("/", async (req, res) => {
     const banner = await PromoBanner.create({
       name: name.trim(),
       description: description ?? null,
-      image: image.trim(),
+      image: localizedImage.trim(),
+      image_id: image_id ?? null,
+      image_en: image_en ?? image ?? null,
+      image_zn: image_zn ?? null,
       url: typeof url === "string" && url.trim() ? url.trim() : null,
       status: status || "active",
     });
@@ -115,7 +122,7 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const banner = await PromoBanner.findByPk(req.params.id);
     if (!banner) return sendError(res, { code: "NOT_FOUND", message: "Promo banner not found", status: 404 });
-    const { name, description, image, url, status } = req.body;
+    const { name, description, image, image_id, image_en, image_zn, url, status } = req.body;
     if (name !== undefined) {
       if (typeof name !== "string" || !name.trim()) {
         return sendError(res, { code: "VALIDATION_ERROR", message: "name must not be empty", status: 422 });
@@ -123,11 +130,18 @@ adminRouter.put("/:id", async (req, res) => {
       banner.name = name.trim();
     }
     if (description !== undefined) banner.description = description;
-    if (image !== undefined) {
-      if (typeof image !== "string" || !image.trim()) {
-        return sendError(res, { code: "VALIDATION_ERROR", message: "image must not be empty", status: 422 });
+    if ([image, image_id, image_en, image_zn].some((value) => value !== undefined)) {
+      const localizedImage = image_en ?? image_id ?? image_zn ?? image;
+      if (typeof localizedImage !== "string" || !localizedImage.trim()) {
+        return sendError(res, { code: "VALIDATION_ERROR", message: "at least one of image_id, image_en, or image_zn must not be empty", status: 422 });
       }
-      banner.image = image.trim();
+      if (image !== undefined && image_id === undefined && image_en === undefined && image_zn === undefined) {
+        banner.image_en = image.trim();
+      }
+      if (image_id !== undefined) banner.image_id = image_id;
+      if (image_en !== undefined) banner.image_en = image_en;
+      if (image_zn !== undefined) banner.image_zn = image_zn;
+      banner.image = [banner.image_en, banner.image_id, banner.image_zn, localizedImage].find((value) => typeof value === "string" && value.trim());
     }
     if (url !== undefined) {
       if (url !== null && typeof url !== "string") {

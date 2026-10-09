@@ -264,7 +264,10 @@ type Edu = {
   desc: string;
   duration: string;  // e.g. "1 day · Jakarta"
   level: string;     // e.g. "Beginner"
-  img: string;       // URL (image/video)
+  img?: string;      // legacy image alias
+  img_id?: string;   // Indonesian image URL
+  img_en?: string;   // English image URL
+  img_zn?: string;   // Chinese image URL
   eyebrow: string;   // e.g. "EDUCATION · WORKSHOP"
   cta: string;       // e.g. "Watch intro"
   link: string;      // YouTube etc.
@@ -289,7 +292,10 @@ type Innovation = {
   title: string;
   desc: string;
   tag: string;       // e.g. "R&D · 2026"
-  img: string;       // image/video URL
+  img?: string;      // legacy image alias
+  img_id?: string;   // Indonesian image URL
+  img_en?: string;   // English image URL
+  img_zn?: string;   // Chinese image URL
   eyebrow: string;   // e.g. "INNOVATION · R&D"
   link: string;
   cta: string;
@@ -300,6 +306,8 @@ type Innovation = {
 ```
 - `GET /innovations` / `GET /innovations/:id`
 - `POST /admin/innovations` etc. (note frontend key `nf_innovation`)
+
+Innovation image supports localized URLs as `img_id`, `img_en`, and `img_zn`; legacy `img` remains as a compatibility alias. Promo banner image URLs use `image_id`, `image_en`, and `image_zn`; legacy `image` remains as a compatibility alias. Provide at least one localized image (or the legacy field) when creating a banner.
 
 ---
 

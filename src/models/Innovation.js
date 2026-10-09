@@ -24,6 +24,18 @@ const Innovation = sequelize.define(
       type: DataTypes.STRING(500),
       allowNull: true,
     },
+    img_id: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    img_en: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    img_zn: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
     eyebrow: {
       type: DataTypes.STRING(200),
       allowNull: true,

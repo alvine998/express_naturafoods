@@ -17,7 +17,10 @@ function serialize(e) {
     desc: j.desc,
     duration: j.duration,
     level: j.level,
-    img: j.img,
+    img: [j.img_en, j.img_id, j.img_zn, j.img].find((value) => typeof value === "string" && value.trim()) ?? null,
+    img_id: j.img_id ?? null,
+    img_en: j.img_en ?? null,
+    img_zn: j.img_zn ?? null,
     eyebrow: j.eyebrow,
     cta: j.cta,
     link: j.link,
@@ -54,12 +57,16 @@ publicRouter.get("/:id", async (req, res) => {
 
 adminRouter.post("/", async (req, res) => {
   try {
-    const { id, title, desc, duration, level, img, eyebrow, cta, link, isPublished } = req.body;
+    const { id, title, desc, duration, level, img, img_id, img_en, img_zn, eyebrow, cta, link, isPublished } = req.body;
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
     if (!title) return sendError(res, { code: "VALIDATION_ERROR", message: "title is required", status: 422 });
+    if (![img_id, img_en, img_zn, img].some((value) => typeof value === "string" && value.trim())) {
+      return sendError(res, { code: "VALIDATION_ERROR", message: "at least one of img_id, img_en, or img_zn is required", status: 422 });
+    }
     const sortIndex = resolveSortIndex(req.body);
     if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
-    const edu = await Education.create({ id, title, desc, duration, level, img, eyebrow, cta, link, isPublished, ...(sortIndex !== undefined ? { sortIndex } : {}) });
+    const fallbackImage = [img_en, img_id, img_zn, img].find((value) => typeof value === "string" && value.trim());
+    const edu = await Education.create({ id, title, desc, duration, level, img: fallbackImage, img_id, img_en: img_en ?? img, img_zn, eyebrow, cta, link, isPublished, ...(sortIndex !== undefined ? { sortIndex } : {}) });
     return sendSuccess(res, serialize(edu), null, 201);
   } catch (err) {
     if (err.name === "SequelizeUniqueConstraintError") return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
@@ -71,7 +78,7 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const edu = await Education.findByPk(req.params.id);
     if (!edu) return sendError(res, { code: "NOT_FOUND", message: "Education not found", status: 404 });
-    const fields = ["id", "title", "desc", "duration", "level", "img", "eyebrow", "cta", "link", "isPublished", "sortIndex"];
+    const fields = ["id", "title", "desc", "duration", "level", "img", "img_id", "img_en", "img_zn", "eyebrow", "cta", "link", "isPublished", "sortIndex"];
     // handle id change
     if (req.body.id && req.body.id !== edu.id) {
       const exists = await Education.findByPk(req.body.id);
@@ -82,6 +89,15 @@ adminRouter.put("/:id", async (req, res) => {
       if (f === "id") return;
       if (req.body[f] !== undefined) edu[f] = req.body[f];
     });
+    if (["img", "img_id", "img_en", "img_zn"].some((field) => req.body[field] !== undefined)) {
+      if (req.body.img !== undefined && req.body.img_id === undefined && req.body.img_en === undefined && req.body.img_zn === undefined) {
+        edu.img_en = req.body.img;
+      }
+      edu.img = [edu.img_en, edu.img_id, edu.img_zn, edu.img].find((value) => typeof value === "string" && value.trim()) ?? null;
+      if (![edu.img_id, edu.img_en, edu.img_zn, edu.img].some((value) => typeof value === "string" && value.trim())) {
+        return sendError(res, { code: "VALIDATION_ERROR", message: "at least one of img_id, img_en, or img_zn is required", status: 422 });
+      }
+    }
     if (req.body.index !== undefined && req.body.sortIndex === undefined) {
       const v = resolveSortIndex(req.body);
       if (v === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });

@@ -2160,7 +2160,7 @@
  *   post:
  *     tags: [Promo Banners]
  *     summary: Create promo banner (admin)
- *     description: Provide the image URL returned by POST /admin/uploads.
+ *     description: Provide at least one localized image URL (image_id, image_en, or image_zn). Legacy image is also accepted. URLs may come from POST /admin/uploads.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -2175,7 +2175,7 @@
  *       401:
  *         description: Unauthorized
  *       422:
- *         description: Missing name/image or invalid status
+ *         description: Missing name/localized image or invalid status
  */
 
 /**

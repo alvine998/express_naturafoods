@@ -25,8 +25,19 @@ const PromoBanner = sequelize.define(
     },
     image: {
       type: DataTypes.STRING(500),
-      allowNull: false,
-      validate: { notEmpty: true },
+      allowNull: true,
+    },
+    image_id: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    image_en: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    image_zn: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
     },
     url: {
       type: DataTypes.STRING(500),

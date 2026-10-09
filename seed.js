@@ -93,6 +93,7 @@ const educationFixtures = [
     duration: "1 day",
     level: "Beginner",
     img: "/uploads/products/1788492930811-qbto3a.png",
+    img_en: "/uploads/products/1788492930811-qbto3a.png",
     eyebrow: "NaturaFoods Academy",
     cta: "Explore course",
     link: "/education/barista-matcha",
@@ -107,6 +108,7 @@ const innovationFixtures = [
     desc: "Explore process improvements that protect cocoa quality from source to finished product.",
     tag: "Cocoa",
     img: "/uploads/products/1788492683010-w7b2cs.png",
+    img_en: "/uploads/products/1788492683010-w7b2cs.png",
     eyebrow: "Innovation",
     link: "/innovations/cocoa-process",
     cta: "Learn more",
@@ -396,6 +398,38 @@ async function migrateProductColumns() {
   }
 }
 
+async function migrateLocalizedImages() {
+  const queryInterface = sequelize.getQueryInterface();
+  const tables = [
+    { name: "educations", legacy: "img", columns: ["img_id", "img_en", "img_zn"] },
+    { name: "innovations", legacy: "img", columns: ["img_id", "img_en", "img_zn"] },
+    { name: "promo_banners", legacy: "image", columns: ["image_id", "image_en", "image_zn"] },
+  ];
+
+  for (const { name, legacy, columns } of tables) {
+    if (!(await queryInterface.tableExists(name))) continue;
+    const table = await queryInterface.describeTable(name);
+    for (const column of columns) {
+      if (!table[column]) {
+        await queryInterface.addColumn(name, column, {
+          type: DataTypes.STRING(500),
+          allowNull: true,
+        });
+      }
+    }
+    if (table[legacy]) {
+      const englishColumn = columns[1];
+      if (!table[englishColumn]) {
+        await sequelize.query(`UPDATE \`${name}\` SET \`${englishColumn}\` = \`${legacy}\` WHERE \`${englishColumn}\` IS NULL AND \`${legacy}\` IS NOT NULL`);
+      }
+      await queryInterface.changeColumn(name, legacy, {
+        type: DataTypes.STRING(500),
+        allowNull: true,
+      });
+    }
+  }
+}
+
 async function migrateCompanySettingsVisiMisi() {
   const queryInterface = sequelize.getQueryInterface();
   if (!(await queryInterface.tableExists("company_settings"))) return;
@@ -510,6 +544,7 @@ async function seed() {
   await migrateSaleTranslationsAndGender();
   await migrateOfficialPartnerBrandIds();
   await migrateProductColumns();
+  await migrateLocalizedImages();
   await migrateSortIndexColumns();
   await migrateCompanySettingsVisiMisi();
   await migrateCompanySettingsCareerBanner();
