@@ -43,7 +43,22 @@ const Product = sequelize.define(
     },
     title: {
       type: DataTypes.STRING(120),
-      allowNull: false,
+      allowNull: true,
+      validate: { len: [2, 120] },
+    },
+    title_id: {
+      type: DataTypes.STRING(120),
+      allowNull: true,
+      validate: { len: [2, 120] },
+    },
+    title_en: {
+      type: DataTypes.STRING(120),
+      allowNull: true,
+      validate: { len: [2, 120] },
+    },
+    title_zn: {
+      type: DataTypes.STRING(120),
+      allowNull: true,
       validate: { len: [2, 120] },
     },
     note: {

@@ -245,6 +245,9 @@ const options = {
               enum: ["home-brand", "small-pack", "general"],
             },
             title: { type: "string" },
+            title_id: { type: "string", maxLength: 120, nullable: true, description: "Indonesian title" },
+            title_en: { type: "string", maxLength: 120, nullable: true, description: "English title" },
+            title_zn: { type: "string", maxLength: 120, nullable: true, description: "Chinese title" },
             note: { type: "string", nullable: true },
             tag: { type: "string", nullable: true },
             img: { type: "string", description: "Image URL" },
@@ -270,7 +273,8 @@ const options = {
         },
         CreateProductRequest: {
           type: "object",
-          required: ["slug", "cat", "title", "img"],
+          description: "Provide at least one of title_id, title_en, or title_zn. Legacy title is accepted as an alias.",
+          required: ["slug", "cat", "img"],
           properties: {
             slug: {
               type: "string",
@@ -279,7 +283,10 @@ const options = {
               maxLength: 64,
             },
             cat: { type: "string", enum: ["choco", "matcha", "other"] },
-            title: { type: "string", minLength: 2, maxLength: 120 },
+            title: { type: "string", minLength: 2, maxLength: 120, description: "Legacy title alias" },
+            title_id: { type: "string", minLength: 2, maxLength: 120, nullable: true },
+            title_en: { type: "string", minLength: 2, maxLength: 120, nullable: true },
+            title_zn: { type: "string", minLength: 2, maxLength: 120, nullable: true },
             img: { type: "string" },
             file: { type: "string", nullable: true, description: "Optional file URL; null/empty clears it" },
             brandId: {
@@ -576,7 +583,10 @@ const options = {
           type: "object",
           properties: {
             id: { type: "string", pattern: "^[a-z0-9-_]+$" },
-            name: { type: "string" },
+            name: { type: "string", nullable: true, description: "Legacy name alias" },
+            name_id: { type: "string", maxLength: 120, nullable: true },
+            name_en: { type: "string", maxLength: 120, nullable: true },
+            name_zn: { type: "string", maxLength: 120, nullable: true },
             description_id: { type: "string", nullable: true },
             description_en: { type: "string", nullable: true },
             description_zn: { type: "string", nullable: true },
@@ -592,7 +602,7 @@ const options = {
         },
         CreateOfficialPartnerRequest: {
           type: "object",
-          required: ["id", "name", "images", "background"],
+          required: ["id", "images", "background"],
           properties: {
             id: {
               type: "string",
@@ -601,6 +611,9 @@ const options = {
               maxLength: 64,
             },
             name: { type: "string", maxLength: 120 },
+            name_id: { type: "string", maxLength: 120, nullable: true },
+            name_en: { type: "string", maxLength: 120, nullable: true },
+            name_zn: { type: "string", maxLength: 120, nullable: true },
             description_id: { type: "string", nullable: true },
             description_en: { type: "string", nullable: true },
             description_zn: { type: "string", nullable: true },

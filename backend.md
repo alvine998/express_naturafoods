@@ -135,7 +135,10 @@ type Product = {
   slug: string;       // unique, ^[a-z0-9-]+$, 3-64 chars. e.g. "belgian-dark-72"
   cat: "choco" | "matcha"; // category
   type: ProductType;  // NEW: "Home Brand" | "Small Pack" | "General"
-  title: string;      // required, 2-120 chars
+  title?: string; // compatibility alias, resolves to title_en/title_id/title_zn
+  title_id?: string; // Indonesian title; at least one localized title required (legacy title accepted)
+  title_en?: string; // English title
+  title_zn?: string; // Chinese title
   note: string;       // short note, e.g. "Callets · Single origin Ecuador"
   tag: string;        // e.g. "Bulk · 2.5kg"
   img: string;        // URL (cdn or external). Upload via /uploads
@@ -182,7 +185,9 @@ Body:
   "slug": "belgian-dark-72",
   "cat": "choco",
   "type": "home-brand",
-  "title": "Belgian Dark 72%",
+   "title_id": "Cokelat Hitam Belgia 72%",
+   "title_en": "Belgian Dark 72%",
+   "title_zn": "比利时黑巧克力 72%",
   "note": "Callets · Single origin",
   "tag": "Bulk · 2.5kg",
   "img": "https://cdn.naturafoods.co.id/products/xxx.webp",
@@ -355,8 +360,12 @@ Frontend `app/lib/store.ts: inquiries: Inquiry[]` key `nf_inquiries` should be r
 ```ts
 type OfficialPartner = {
   id: string;        // unique, e.g. "bensdorp" (frontend validates uniqueness)
-  name: string;      // required, e.g. "Bens Dorp"
-  description: string; // short, 0-500
+  name_id?: string;
+  name_en?: string;
+  name_zn?: string;
+  description_id?: string;
+  description_en?: string;
+  description_zn?: string;
   images: string[];   // URLs: card images / brandLogo gallery
   background: string;// URL: card background / hero
   isPublished: boolean; // default true – controls Home display
@@ -371,7 +380,7 @@ type OfficialPartner = {
 ### 9.2 Endpoints
 - `GET /official-partners?isPublished=true&q=&page&limit` – public Home uses `?isPublished=true`
 - `GET /official-partners/:id`
-- `POST /admin/official-partners` Body `{id,name,description,images,background,isPublished}` → `201` Err `409 id exists`
+- `POST /admin/official-partners` Body `{id,name_id,name_en,name_zn,description_id,description_en,description_zn,images,background,isPublished}` (at least one localized name required) → `201` Err `409 id exists`
 - `PUT /admin/official-partners/:id` (id change validates uniqueness)
 - `PATCH /admin/official-partners/:id/publish` `{isPublished:boolean}` – for table toggle
 - `DELETE /admin/official-partners/:id` → `204`
@@ -682,4 +691,3 @@ curl -X PATCH https://api.naturafoods.co.id/api/v1/admin/official-partners/bensd
 curl -X POST https://api.naturafoods.co.id/api/v1/admin/uploads \
   -H "Authorization: Bearer <token>" -F "file=@./bensdorp.png" -F "folder=partners"
 ```
-

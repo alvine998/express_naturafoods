@@ -40,6 +40,9 @@ const productFixtures = [
     categorySlug: "choco",
     type: "home-brand",
     title: "Belgian Dark Chocolate 72%",
+    title_id: "Cokelat Hitam Belgia 72%",
+    title_en: "Belgian Dark Chocolate 72%",
+    title_zn: "比利时黑巧克力 72%",
     note: "Rich cocoa with a balanced finish",
     tag: "Dark Chocolate",
     img: "/uploads/products/1788492683010-w7b2cs.png",
@@ -52,6 +55,9 @@ const productFixtures = [
     categorySlug: "matcha",
     type: "general",
     title: "Premium Matcha",
+    title_id: "Matcha Premium",
+    title_en: "Premium Matcha",
+    title_zn: "高级抹茶",
     note: "Bright, smooth, and aromatic",
     tag: "Matcha",
     img: "/uploads/products/1788492930811-qbto3a.png",
@@ -111,7 +117,7 @@ const innovationFixtures = [
 const partnerFixtures = [
   {
     id: "bensdorp",
-    name: "Bensdorp",
+    name_en: "Bensdorp",
     description: "A trusted partner for premium cocoa ingredients.",
     images: [
       "/uploads/partners/1788492930873-rhjo2e.png",
@@ -283,6 +289,31 @@ async function migratePartnerAndSocialDescriptions() {
   }
 }
 
+async function migrateOfficialPartnerNames() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("official_partners"))) return;
+
+  const table = await queryInterface.describeTable("official_partners");
+  const shouldMigrateLegacyName = !table.name_en && !!table.name;
+  for (const column of ["name_id", "name_en", "name_zn"]) {
+    if (!table[column]) {
+      await queryInterface.addColumn("official_partners", column, {
+        type: DataTypes.STRING(120),
+        allowNull: true,
+      });
+    }
+  }
+  if (table.name) {
+    if (shouldMigrateLegacyName) {
+      await sequelize.query("UPDATE official_partners SET name_en = name WHERE name_en IS NULL AND name IS NOT NULL");
+    }
+    await queryInterface.changeColumn("official_partners", "name", {
+      type: DataTypes.STRING(120),
+      allowNull: true,
+    });
+  }
+}
+
 async function migrateSaleTranslationsAndGender() {
   const queryInterface = sequelize.getQueryInterface();
   if (!(await queryInterface.tableExists("sales"))) return;
@@ -342,6 +373,24 @@ async function migrateProductColumns() {
   if (!table.brand_id) {
     await queryInterface.addColumn("products", "brand_id", {
       type: DataTypes.UUID,
+      allowNull: true,
+    });
+  }
+
+  for (const column of ["title_id", "title_en", "title_zn"]) {
+    if (!table[column]) {
+      await queryInterface.addColumn("products", column, {
+        type: DataTypes.STRING(120),
+        allowNull: true,
+      });
+    }
+  }
+  if (table.title) {
+    if (!table.title_en) {
+      await sequelize.query("UPDATE products SET title_en = title WHERE title_en IS NULL AND title IS NOT NULL");
+    }
+    await queryInterface.changeColumn("products", "title", {
+      type: DataTypes.STRING(120),
       allowNull: true,
     });
   }
@@ -457,6 +506,7 @@ async function seed() {
   await migrateHomeBrandColumns();
   await migrateTranslatedDescriptions();
   await migratePartnerAndSocialDescriptions();
+  await migrateOfficialPartnerNames();
   await migrateSaleTranslationsAndGender();
   await migrateOfficialPartnerBrandIds();
   await migrateProductColumns();

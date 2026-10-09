@@ -13,7 +13,10 @@ function serialize(p) {
   const j = p.toJSON();
   return {
     id: j.id,
-    name: j.name,
+    name: j.name_en ?? j.name_id ?? j.name_zn ?? j.name,
+    name_id: j.name_id ?? null,
+    name_en: j.name_en ?? null,
+    name_zn: j.name_zn ?? null,
     description_id: j.description_id ?? null,
     description_en: j.description_en ?? null,
     description_zn: j.description_zn ?? null,
@@ -41,7 +44,7 @@ publicRouter.get("/", async (req, res) => {
       if (v === "true" || v === "false") where.isPublished = v === "true";
     }
     if (req.query.q) {
-      const search = buildSearchWhere(req.query.q, ["name", "id", "description_id", "description_en", "description_zn"]);
+      const search = buildSearchWhere(req.query.q, ["name", "name_id", "name_en", "name_zn", "id", "description_id", "description_en", "description_zn"]);
       Object.assign(where, search);
     }
     const order = defaultOrder(req, sort, "order");
@@ -65,9 +68,12 @@ publicRouter.get("/:id", async (req, res) => {
 // ADMIN
 adminRouter.post("/", async (req, res) => {
   try {
-    const { id, name, description_id, description_en, description_zn, images, background, isPublished, link, color, brandIds, order } = req.body;
+    const { id, name, name_id, name_en, name_zn, description_id, description_en, description_zn, images, background, isPublished, link, color, brandIds, order } = req.body;
     if (!id) return sendError(res, { code: "VALIDATION_ERROR", message: "id is required", status: 422 });
-    if (!name) return sendError(res, { code: "VALIDATION_ERROR", message: "name is required", status: 422 });
+    const legacyName = name_en ?? name_id ?? name_zn ?? name;
+    if (![name_id, name_en, name_zn, name].some((value) => typeof value === "string" && value.trim())) {
+      return sendError(res, { code: "VALIDATION_ERROR", message: "at least one of name_id, name_en, or name_zn is required", status: 422 });
+    }
     if (!Array.isArray(images) || images.length === 0 || images.some((image) => typeof image !== "string" || image.trim() === "")) {
       return sendError(res, { code: "VALIDATION_ERROR", message: "images must be a non-empty array of strings", status: 422 });
     }
@@ -75,7 +81,10 @@ adminRouter.post("/", async (req, res) => {
     const normalizedBrandIds = Array.isArray(brandIds) ? [...new Set(brandIds.map((v) => String(v).trim()).filter(Boolean))] : [];
     const partner = await OfficialPartner.create({
       id: String(id).toLowerCase(),
-      name,
+      name: legacyName,
+      name_id,
+      name_en,
+      name_zn,
       description_id,
       description_en,
       description_zn,
@@ -99,13 +108,22 @@ adminRouter.put("/:id", async (req, res) => {
   try {
     const partner = await OfficialPartner.findByPk(req.params.id);
     if (!partner) return sendError(res, { code: "NOT_FOUND", message: "Official partner not found", status: 404 });
-    const { id, name, description_id, description_en, description_zn, images, background, isPublished, link, color, brandIds, order } = req.body;
+    const { id, name, name_id, name_en, name_zn, description_id, description_en, description_zn, images, background, isPublished, link, color, brandIds, order } = req.body;
     if (id && id !== partner.id) {
       const exists = await OfficialPartner.findByPk(id);
       if (exists) return sendError(res, { code: "CONFLICT", message: "id already exists", status: 409 });
       partner.id = String(id).toLowerCase();
     }
     if (name !== undefined) partner.name = name;
+    if (name_id !== undefined) partner.name_id = name_id;
+    if (name_en !== undefined) partner.name_en = name_en;
+    if (name_zn !== undefined) partner.name_zn = name_zn;
+    if (name !== undefined || name_id !== undefined || name_en !== undefined || name_zn !== undefined) {
+      partner.name = partner.name_en ?? partner.name_id ?? partner.name_zn ?? partner.name;
+    }
+    if (![partner.name_id, partner.name_en, partner.name_zn, partner.name].some((value) => typeof value === "string" && value.trim())) {
+      return sendError(res, { code: "VALIDATION_ERROR", message: "at least one of name_id, name_en, or name_zn is required", status: 422 });
+    }
     if (description_id !== undefined) partner.description_id = description_id;
     if (description_en !== undefined) partner.description_en = description_en;
     if (description_zn !== undefined) partner.description_zn = description_zn;

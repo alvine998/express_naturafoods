@@ -24,7 +24,10 @@ function serialize(p) {
     brandId: j.brandId ?? j.brand_id ?? null,
     brand: j.brand ? { id: j.brand.id, slug: j.brand.slug, name: j.brand.name } : null,
     type: j.type,
-    title: j.title,
+    title: j.title_en ?? j.title_id ?? j.title_zn ?? j.title,
+    title_id: j.title_id ?? null,
+    title_en: j.title_en ?? null,
+    title_zn: j.title_zn ?? null,
     note: j.note,
     tag: j.tag,
     img: j.img,
@@ -65,7 +68,7 @@ publicRouter.get("/", async (req, res) => {
       if (v === "true" || v === "false") where.isPublished = v === "true";
     }
     if (req.query.q) {
-      const search = buildSearchWhere(req.query.q, ["title", "slug", "tag", "type", "desc_id", "desc_en", "desc_zn"]);
+      const search = buildSearchWhere(req.query.q, ["title", "title_id", "title_en", "title_zn", "slug", "tag", "type", "desc_id", "desc_en", "desc_zn"]);
       Object.assign(where, search);
     }
 
@@ -122,7 +125,7 @@ publicRouter.get("/:slug", async (req, res) => {
 // ADMIN: POST /admin/products
 adminRouter.post("/", async (req, res) => {
   try {
-    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc_id, desc_en, desc_zn, isHighlight, isPublished } = req.body;
+    const { slug, categoryId, brandId, type, title, title_id, title_en, title_zn, note, tag, img, file, desc_id, desc_en, desc_zn, isHighlight, isPublished } = req.body;
     const sortIndex = resolveSortIndex(req.body);
     if (sortIndex === null) return sendError(res, { code: "VALIDATION_ERROR", message: "sortIndex must be an integer", status: 422 });
     const slugErr = validateSlug(slug);
@@ -134,14 +137,19 @@ adminRouter.post("/", async (req, res) => {
       const brandExists = await Brand.findByPk(brandId);
       if (!brandExists) return sendError(res, { code: "VALIDATION_ERROR", message: "Brand not found", status: 422 });
     }
-    if (!title) return sendError(res, { code: "VALIDATION_ERROR", message: "title is required", status: 422 });
+    if (![title_id, title_en, title_zn, title].some((value) => typeof value === "string" && value.trim())) {
+      return sendError(res, { code: "VALIDATION_ERROR", message: "at least one of title_id, title_en, or title_zn is required", status: 422 });
+    }
     if (!img) return sendError(res, { code: "VALIDATION_ERROR", message: "img is required", status: 422 });
     const product = await Product.create({
       slug: slug.toLowerCase(),
       categoryId,
       brandId: brandId || null,
       type: type || "general",
-      title,
+      title: title_en ?? title_id ?? title_zn ?? title,
+      title_id,
+      title_en: title_en ?? title,
+      title_zn,
       note,
       tag,
       img,
@@ -171,7 +179,7 @@ adminRouter.put("/:slug", async (req, res) => {
   try {
     const product = await Product.findOne({ where: { slug: req.params.slug } });
     if (!product) return sendError(res, { code: "NOT_FOUND", message: "Product not found", status: 404 });
-    const { slug, categoryId, brandId, type, title, note, tag, img, file, desc_id, desc_en, desc_zn, isHighlight, isPublished, sortIndex } = req.body;
+    const { slug, categoryId, brandId, type, title, title_id, title_en, title_zn, note, tag, img, file, desc_id, desc_en, desc_zn, isHighlight, isPublished, sortIndex } = req.body;
     if (slug && slug !== product.slug) {
       const err = validateSlug(slug);
       if (err) return sendError(res, { code: "VALIDATION_ERROR", message: err, status: 422 });
@@ -195,6 +203,18 @@ adminRouter.put("/:slug", async (req, res) => {
     }
     if (type !== undefined) product.type = type;
     if (title !== undefined) product.title = title;
+    if (title_id !== undefined) product.title_id = title_id;
+    if (title_en !== undefined) product.title_en = title_en;
+    if (title_zn !== undefined) product.title_zn = title_zn;
+    if (title !== undefined && title_id === undefined && title_en === undefined && title_zn === undefined) {
+      product.title_en = title;
+    }
+    if (title !== undefined || title_id !== undefined || title_en !== undefined || title_zn !== undefined) {
+      product.title = product.title_en ?? product.title_id ?? product.title_zn ?? product.title;
+    }
+    if (![product.title_id, product.title_en, product.title_zn, product.title].some((value) => typeof value === "string" && value.trim())) {
+      return sendError(res, { code: "VALIDATION_ERROR", message: "at least one of title_id, title_en, or title_zn is required", status: 422 });
+    }
     if (note !== undefined) product.note = note;
     if (tag !== undefined) product.tag = tag;
     if (img !== undefined) product.img = img;

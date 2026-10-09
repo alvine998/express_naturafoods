@@ -94,13 +94,15 @@ const { data: highlighted2 } = await apiFetch<Product[]>("/products/highlighted"
 const { data: product } = await apiFetch<Product>(`/products/${slug}`);
 
 // admin
-await apiFetch("/admin/products", { method:"POST", body: JSON.stringify({slug,categoryId,brandId,type,title,note,tag,img,file,desc,isHighlight}) });
+await apiFetch("/admin/products", { method:"POST", body: JSON.stringify({slug,categoryId,brandId,type,title_id,title_en,title_zn,note,tag,img,file,desc_id,desc_en,desc_zn,isHighlight}) });
 await apiFetch(`/admin/products/${slug}`, { method:"PUT", body: JSON.stringify({...product}) });
 await apiFetch(`/admin/products/${slug}/highlight`, { method:"PATCH", body: JSON.stringify({isHighlight:true}) });
 await apiFetch(`/admin/products/${slug}`, { method:"DELETE" });
 ```
 
 Model `Product` matches `backend.md:3.1` with `isHighlight` for `HighlightedProductsSection`. Keep `PAGE_SIZE = 8`.
+
+Products support `title_id`, `title_en`, and `title_zn`; provide at least one when creating. The legacy `title` field remains available as a compatibility alias.
 
 `brandId` is optional (nullable). Products return `brandId` plus an embedded `brand: {id,slug,name}`; filter with `/products?brandId=<uuid>`, or comma-separate for several brands: `/products?brandId=<uuid1>,<uuid2>`. Setting `brandId: null` on PUT clears the brand.
 
@@ -130,7 +132,7 @@ const { data } = await apiFetch<OfficialPartner[]>("/official-partners?isPublish
 const mapped = data.map(p => ({ brandLogo: p.images[0], brandImages: p.images, mainImage: p.background, color: p.color || stringToColor(p.id) }));
 
 // admin
-await apiFetch("/admin/official-partners", { method:"POST", body: JSON.stringify({id,name,description,images,background,isPublished}) });
+await apiFetch("/admin/official-partners", { method:"POST", body: JSON.stringify({id,name_id,name_en,name_zn,description_id,description_en,description_zn,images,background,isPublished}) });
 await apiFetch(`/admin/official-partners/${id}`, { method:"PUT", body: JSON.stringify({...}) });
 await apiFetch(`/admin/official-partners/${id}/publish`, { method:"PATCH", body: JSON.stringify({isPublished:false}) });
 await apiFetch(`/admin/official-partners/reorder`, { method:"PATCH", body: JSON.stringify({ids: orderedIds}) });

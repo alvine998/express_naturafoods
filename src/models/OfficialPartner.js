@@ -11,7 +11,19 @@ const OfficialPartner = sequelize.define(
     },
     name: {
       type: DataTypes.STRING(120),
-      allowNull: false,
+      allowNull: true,
+    },
+    name_id: {
+      type: DataTypes.STRING(120),
+      allowNull: true,
+    },
+    name_en: {
+      type: DataTypes.STRING(120),
+      allowNull: true,
+    },
+    name_zn: {
+      type: DataTypes.STRING(120),
+      allowNull: true,
     },
     description_id: {
       type: DataTypes.TEXT("medium"),
