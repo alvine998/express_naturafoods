@@ -10,10 +10,27 @@ const publicRouter = express.Router();
 const adminRouter = express.Router();
 adminRouter.use(publicGetAuth);
 
+function resolveExcerpt(j) {
+  return (
+    j.excerptEN ??
+    j.excerpt_en ??
+    j.excerptID ??
+    j.excerpt_id ??
+    j.excerptZN ??
+    j.excerpt_zn ??
+    j.excerpt ??
+    null
+  );
+}
+
 function serialize(a) {
   const j = a.toJSON();
   // map DB fields to contract shape while keeping both
   const isPublished = j.status === "published";
+  const excerptID = j.excerptID ?? j.excerpt_id ?? null;
+  const excerptEN = j.excerptEN ?? j.excerpt_en ?? null;
+  const excerptZN = j.excerptZN ?? j.excerpt_zn ?? null;
+  const excerpt = resolveExcerpt(j);
   return {
     id: j.id,
     slug: j.slug,
@@ -22,7 +39,13 @@ function serialize(a) {
     titleEN: j.titleEN,
     titleZN: j.titleZN,
     category: j.category,
-    excerpt: j.excerpt,
+    excerpt,
+    excerptID,
+    excerptEN,
+    excerptZN,
+    excerpt_id: excerptID,
+    excerpt_en: excerptEN,
+    excerpt_zn: excerptZN,
     keywords: j.keywords,
     status: j.status,
     isPublished,
@@ -75,7 +98,40 @@ function mapContractToDb(body, isCreate = false) {
   if (body.titleEN !== undefined) data.titleEN = body.titleEN;
   if (body.titleZN !== undefined) data.titleZN = body.titleZN;
   if (body.category !== undefined) data.category = body.category;
-  if (body.excerpt !== undefined) data.excerpt = body.excerpt;
+  // excerpt handling: legacy `excerpt` is kept as compatibility alias.
+  // Localized fields accepted in camelCase (excerptID/EN/ZN) and snake_case
+  // (excerpt_id/en/zn) plus common aliases (excerptId/En/Zh).
+  {
+    const excerptID =
+      body.excerptID ?? body.excerpt_id ?? body.excerptId ?? undefined;
+    const excerptEN =
+      body.excerptEN ?? body.excerpt_en ?? body.excerptEn ?? undefined;
+    const excerptZN =
+      body.excerptZN ??
+      body.excerpt_zn ??
+      body.excerptZn ??
+      body.excerptZh ??
+      body.excerptZH ??
+      undefined;
+    if (excerptID !== undefined) data.excerptID = excerptID;
+    if (excerptEN !== undefined) data.excerptEN = excerptEN;
+    if (excerptZN !== undefined) data.excerptZN = excerptZN;
+    if (body.excerpt !== undefined) {
+      data.excerpt = body.excerpt;
+      // migrate legacy value forward so localized readers get a value
+      if (excerptEN === undefined && data.excerptEN === undefined) {
+        data.excerptEN = body.excerpt;
+      }
+    }
+    // keep legacy `excerpt` populated for old readers when only localized is sent
+    if (
+      body.excerpt === undefined &&
+      (excerptID !== undefined || excerptEN !== undefined || excerptZN !== undefined)
+    ) {
+      data.excerpt =
+        excerptEN ?? excerptID ?? excerptZN ?? null;
+    }
+  }
   if (body.keywords !== undefined) data.keywords = normalizeKeywords(body.keywords);
   if (body.status !== undefined) data.status = body.status;
   else if (body.isPublished !== undefined) data.status = body.isPublished ? "published" : "draft";
@@ -132,6 +188,9 @@ publicRouter.get("/", async (req, res) => {
         { titleZN: { [Op.like]: like } },
         { category: { [Op.like]: like } },
         { excerpt: { [Op.like]: like } },
+        { excerptID: { [Op.like]: like } },
+        { excerptEN: { [Op.like]: like } },
+        { excerptZN: { [Op.like]: like } },
         { keywords: { [Op.like]: like } },
       ];
       // if we set Op.or alongside other where, need to handle correctly: Sequelize where with Op.or at top level mixes with other fields => need Op.and

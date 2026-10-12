@@ -36,6 +36,15 @@ const Article = sequelize.define(
     excerpt: {
       type: DataTypes.TEXT("medium"),
     },
+    excerptID: {
+      type: DataTypes.TEXT("medium"),
+    },
+    excerptEN: {
+      type: DataTypes.TEXT("medium"),
+    },
+    excerptZN: {
+      type: DataTypes.TEXT("medium"),
+    },
     keywords: {
       type: DataTypes.STRING(255),
     },

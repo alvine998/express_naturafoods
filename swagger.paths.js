@@ -671,7 +671,7 @@
  *       - in: query
  *         name: q
  *         schema: { type: string }
- *         description: Search across slug, titleID, titleEN, titleZN, category, excerpt, keywords
+  *         description: Search across slug, titleID, titleEN, titleZN, category, excerpt, excerptID, excerptEN, excerptZN, keywords
  *     responses:
  *       200:
  *         description: Paginated article list

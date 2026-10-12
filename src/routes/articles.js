@@ -42,6 +42,9 @@ router.get("/", async (req, res) => {
         { titleZN: { [Op.like]: like } },
         { category: { [Op.like]: like } },
         { excerpt: { [Op.like]: like } },
+        { excerptID: { [Op.like]: like } },
+        { excerptEN: { [Op.like]: like } },
+        { excerptZN: { [Op.like]: like } },
         { keywords: { [Op.like]: like } },
       ];
     }
@@ -72,6 +75,17 @@ router.post("/", async (req, res) => {
   try {
     const payload = { ...req.body };
     if (payload.keywords !== undefined) payload.keywords = normalizeKeywords(payload.keywords);
+    // map snake_case / alias excerpt fields to camelCase model attributes
+    if (payload.excerptID === undefined) {
+      payload.excerptID = payload.excerpt_id ?? payload.excerptId ?? undefined;
+    }
+    if (payload.excerptEN === undefined) {
+      payload.excerptEN = payload.excerpt_en ?? payload.excerptEn ?? payload.excerpt ?? undefined;
+    }
+    if (payload.excerptZN === undefined) {
+      payload.excerptZN =
+        payload.excerpt_zn ?? payload.excerptZn ?? payload.excerptZh ?? payload.excerptZH ?? undefined;
+    }
     const article = await Article.create(payload);
     res.status(201).json(article);
   } catch (err) {
@@ -102,6 +116,9 @@ router.put("/:id", async (req, res) => {
       "titleZN",
       "category",
       "excerpt",
+      "excerptID",
+      "excerptEN",
+      "excerptZN",
       "keywords",
       "status",
       "published_date",
@@ -109,6 +126,36 @@ router.put("/:id", async (req, res) => {
       "contentEN",
       "contentZN",
     ];
+    // map snake_case aliases to camelCase model attributes
+    const aliasMap = {
+      excerpt_id: "excerptID",
+      excerpt_en: "excerptEN",
+      excerpt_zn: "excerptZN",
+      excerptId: "excerptID",
+      excerptEn: "excerptEN",
+      excerptZn: "excerptZN",
+      excerptZh: "excerptZN",
+    };
+    for (const [alias, target] of Object.entries(aliasMap)) {
+      if (req.body[alias] !== undefined && req.body[target] === undefined) {
+        req.body[target] = req.body[alias];
+      }
+    }
+    // keep legacy excerpt in sync for backward compat
+    if (req.body.excerpt !== undefined) {
+      if (req.body.excerptEN === undefined && req.body.excerptID === undefined && req.body.excerptZN === undefined) {
+        if (article.excerptEN === null || article.excerptEN === undefined) {
+          req.body.excerptEN = req.body.excerpt;
+        }
+      }
+    } else if (
+      req.body.excerptID !== undefined ||
+      req.body.excerptEN !== undefined ||
+      req.body.excerptZN !== undefined
+    ) {
+      req.body.excerpt =
+        req.body.excerptEN ?? req.body.excerptID ?? req.body.excerptZN ?? article.excerpt;
+    }
     fields.forEach((field) => {
       if (req.body[field] !== undefined) {
         article[field] = field === "keywords" ? normalizeKeywords(req.body[field]) : req.body[field];

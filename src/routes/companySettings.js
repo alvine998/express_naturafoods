@@ -27,6 +27,9 @@ const FIELDS = [
   "misiPersonName",
   "misiPersonPosition",
   "careerBanner",
+  "careerBannerID",
+  "careerBannerEN",
+  "careerBannerZN",
   "careerUrl",
   "tagline",
   "email",
@@ -40,10 +43,45 @@ const FIELDS = [
   "youtube",
   "mapsUrl",
 ];
+const CAREER_BANNER_ALIAS_MAP = {
+  career_banner: "careerBanner",
+  career_banner_id: "careerBannerID",
+  career_banner_en: "careerBannerEN",
+  career_banner_zn: "careerBannerZN",
+  careerBannerId: "careerBannerID",
+  careerBannerEn: "careerBannerEN",
+  careerBannerZn: "careerBannerZN",
+};
 function extract(body = {}) {
+  const normalized = { ...body };
+  for (const [alias, target] of Object.entries(CAREER_BANNER_ALIAS_MAP)) {
+    if (normalized[alias] !== undefined && normalized[target] === undefined) {
+      normalized[target] = normalized[alias];
+    }
+  }
+  // keep legacy careerBanner in sync for backward compat
+  if (normalized.careerBanner !== undefined) {
+    if (
+      normalized.careerBannerEN === undefined &&
+      normalized.careerBannerID === undefined &&
+      normalized.careerBannerZN === undefined
+    ) {
+      normalized.careerBannerEN = normalized.careerBanner;
+    }
+  } else if (
+    normalized.careerBannerID !== undefined ||
+    normalized.careerBannerEN !== undefined ||
+    normalized.careerBannerZN !== undefined
+  ) {
+    normalized.careerBanner =
+      normalized.careerBannerEN ??
+      normalized.careerBannerID ??
+      normalized.careerBannerZN ??
+      null;
+  }
   const out = {};
   for (const field of FIELDS) {
-    if (body[field] !== undefined) out[field] = body[field];
+    if (normalized[field] !== undefined) out[field] = normalized[field];
   }
   for (const key of Object.keys(out)) {
     if (typeof out[key] === "string") {
@@ -76,7 +114,22 @@ function serialize(setting) {
     misiPersonPhoto: j.misiPersonPhoto ?? j.misi_person_photo ?? null,
     misiPersonName: j.misiPersonName ?? j.misi_person_name ?? null,
     misiPersonPosition: j.misiPersonPosition ?? j.misi_person_position ?? null,
-    careerBanner: j.careerBanner ?? j.career_banner ?? null,
+    careerBanner:
+      j.careerBannerEN ??
+      j.careerBannerID ??
+      j.careerBannerZN ??
+      j.careerBanner ??
+      j.career_banner_en ??
+      j.career_banner_id ??
+      j.career_banner_zn ??
+      j.career_banner ??
+      null,
+    careerBannerID: j.careerBannerID ?? j.career_banner_id ?? null,
+    careerBannerEN: j.careerBannerEN ?? j.career_banner_en ?? null,
+    careerBannerZN: j.careerBannerZN ?? j.career_banner_zn ?? null,
+    career_banner_id: j.careerBannerID ?? j.career_banner_id ?? null,
+    career_banner_en: j.careerBannerEN ?? j.career_banner_en ?? null,
+    career_banner_zn: j.careerBannerZN ?? j.career_banner_zn ?? null,
     careerUrl: j.careerUrl ?? j.career_url ?? null,
     tagline: j.tagline ?? null,
     email: j.email ?? null,

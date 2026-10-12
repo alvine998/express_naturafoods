@@ -227,7 +227,10 @@ type Article = {
   id: string;        // uuid backend, frontend uses slug as id
   slug: string;      // unique, e.g. "tempering-guide"
   title: string;     // required
-  excerpt: string;   // 0-300
+  excerpt?: string;  // legacy excerpt alias (falls back to excerptEN/ID/ZN)
+  excerptID?: string; // Indonesian excerpt
+  excerptEN?: string; // English excerpt
+  excerptZN?: string; // Chinese excerpt
   keywords: string;  // SEO keywords, comma-separated, 0-255 chars, e.g. "chocolate, tempering, baking". Accepts string or string[] (joined with ", "). Searchable via `q` and filterable via `?keywords=`.
   content: string;   // deprecated fallback (EN)
   contentId: string; // ID locale HTML
@@ -241,9 +244,10 @@ type Article = {
   updatedAt: string;
 }
 ```
+Article excerpts are localized as `excerptID`, `excerptEN`, and `excerptZN` (`excerpt_id/en/zn` accepted as aliases); legacy `excerpt` remains as a compatibility alias. `q` searches `slug, titleID/EN/ZN, category, excerpt, excerptID/EN/ZN, keywords`.
 
 ### 4.2 Endpoints
-- `GET /articles?q=&category=&keywords=&page=&limit=&sort=date:desc` (`q` searches `slug, titleID/EN/ZN, category, excerpt, keywords`; `keywords` filters `keywords LIKE %...%`)
+- `GET /articles?q=&category=&keywords=&page=&limit=&sort=date:desc` (`q` searches `slug, titleID/EN/ZN, category, excerpt, excerptID/EN/ZN, keywords`; `keywords` filters `keywords LIKE %...%`)
 - `GET /articles/:slug`
 - `POST /admin/articles` Body full Article (without id). `slug, title` required. `keywords` optional string/array, max 255 chars.
 - `PUT /admin/articles/:slug` (`keywords` same validation; `null`/empty clears it)
@@ -595,6 +599,9 @@ model Article {
   slug      String @unique
   title     String
   excerpt   String? @db.Text
+  excerptID String? @db.Text
+  excerptEN String? @db.Text
+  excerptZN String? @db.Text
   content   String? @db.Text
   contentId String? @db.Text
   contentEn String? @db.Text

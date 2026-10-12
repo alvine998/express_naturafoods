@@ -76,6 +76,9 @@ const articleFixtures = [
     titleZN: "巧克力调温实用指南",
     category: "Chocolate",
     excerpt: "Learn the basic steps for creating glossy chocolate with a satisfying snap.",
+    excerptID: "Pelajari langkah dasar untuk membuat cokelat mengilap dengan bunyi renyah yang memuaskan.",
+    excerptEN: "Learn the basic steps for creating glossy chocolate with a satisfying snap.",
+    excerptZN: "学习制作光泽巧克力并获得令人满意脆感的基本步骤。",
     keywords: "chocolate, tempering, baking",
     status: "published",
     published_date: "2026-01-15",
@@ -531,6 +534,45 @@ async function migrateArticleKeywords() {
   }
 }
 
+async function migrateArticleExcerpts() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("articles"))) return;
+  const table = await queryInterface.describeTable("articles");
+  for (const column of ["excerpt_id", "excerpt_en", "excerpt_zn"]) {
+    if (!table[column]) {
+      await queryInterface.addColumn("articles", column, {
+        type: DataTypes.TEXT("medium"),
+        allowNull: true,
+      });
+    }
+  }
+  // migrate legacy single excerpt forward to English so localized readers get a value
+  try {
+    await sequelize.query(
+      "UPDATE articles SET excerpt_en = excerpt WHERE excerpt_en IS NULL AND excerpt IS NOT NULL"
+    );
+  } catch {}
+}
+
+async function migrateCompanySettingsCareerBannerLocalized() {
+  const queryInterface = sequelize.getQueryInterface();
+  if (!(await queryInterface.tableExists("company_settings"))) return;
+  const table = await queryInterface.describeTable("company_settings");
+  for (const column of ["career_banner_id", "career_banner_en", "career_banner_zn"]) {
+    if (!table[column]) {
+      await queryInterface.addColumn("company_settings", column, {
+        type: DataTypes.STRING(500),
+        allowNull: true,
+      });
+    }
+  }
+  try {
+    await sequelize.query(
+      "UPDATE company_settings SET career_banner_en = career_banner WHERE career_banner_en IS NULL AND career_banner IS NOT NULL"
+    );
+  } catch {}
+}
+
 async function seed() {
   const syncOptions = process.env.DB_SYNC_ALTER === "false" ? {} : { alter: true };
   await sequelize.authenticate();
@@ -549,6 +591,8 @@ async function seed() {
   await migrateCompanySettingsVisiMisi();
   await migrateCompanySettingsCareerBanner();
   await migrateArticleKeywords();
+  await migrateArticleExcerpts();
+  await migrateCompanySettingsCareerBannerLocalized();
   await sequelize.sync(syncOptions);
 
   if (process.env.DB_SYNC_ALTER !== "false") {
