@@ -36,14 +36,24 @@ const Article = sequelize.define(
     excerpt: {
       type: DataTypes.TEXT("medium"),
     },
+    // NOTE: explicit `field` mapping is required. With `underscored: true`
+    // Sequelize would otherwise map excerptID -> `excerpt_i_d`
+    // (and excerptEN -> `excerpt_e_n`), but the real columns created by
+    // migrations/2026-10-12-add-localized-excerpt-and-career-banner.sql
+    // and seed.js migrateArticleExcerpts() are `excerpt_id/en/zn`.
+    // Missing mapping broke every articles query with:
+    //   Unknown column 'excerpt_i_d' in 'field list'
     excerptID: {
       type: DataTypes.TEXT("medium"),
+      field: "excerpt_id",
     },
     excerptEN: {
       type: DataTypes.TEXT("medium"),
+      field: "excerpt_en",
     },
     excerptZN: {
       type: DataTypes.TEXT("medium"),
+      field: "excerpt_zn",
     },
     keywords: {
       type: DataTypes.STRING(255),
